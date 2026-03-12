@@ -1,24 +1,25 @@
 const brands = window.BRAND_DATA || [];
+const basePath = window.location.pathname.includes("/regions/") ? ".." : ".";
 
 const REGION_PAGES = [
-  { name: "전국", href: "/index.html" },
-  { name: "서울", href: "/regions/seoul.html" },
-  { name: "부산", href: "/regions/busan.html" },
-  { name: "대구", href: "/regions/daegu.html" },
-  { name: "인천", href: "/regions/incheon.html" },
-  { name: "광주", href: "/regions/gwangju.html" },
-  { name: "대전", href: "/regions/daejeon.html" },
-  { name: "울산", href: "/regions/ulsan.html" },
-  { name: "세종", href: "/regions/sejong.html" },
-  { name: "경기", href: "/regions/gyeonggi.html" },
-  { name: "강원", href: "/regions/gangwon.html" },
-  { name: "충북", href: "/regions/chungbuk.html" },
-  { name: "충남", href: "/regions/chungnam.html" },
-  { name: "전북", href: "/regions/jeonbuk.html" },
-  { name: "전남", href: "/regions/jeonnam.html" },
-  { name: "경북", href: "/regions/gyeongbuk.html" },
-  { name: "경남", href: "/regions/gyeongnam.html" },
-  { name: "제주", href: "/regions/jeju.html" }
+  { name: "전국", href: `${basePath}/index.html` },
+  { name: "서울", href: `${basePath}/regions/seoul.html` },
+  { name: "부산", href: `${basePath}/regions/busan.html` },
+  { name: "대구", href: `${basePath}/regions/daegu.html` },
+  { name: "인천", href: `${basePath}/regions/incheon.html` },
+  { name: "광주", href: `${basePath}/regions/gwangju.html` },
+  { name: "대전", href: `${basePath}/regions/daejeon.html` },
+  { name: "울산", href: `${basePath}/regions/ulsan.html` },
+  { name: "세종", href: `${basePath}/regions/sejong.html` },
+  { name: "경기", href: `${basePath}/regions/gyeonggi.html` },
+  { name: "강원", href: `${basePath}/regions/gangwon.html` },
+  { name: "충북", href: `${basePath}/regions/chungbuk.html` },
+  { name: "충남", href: `${basePath}/regions/chungnam.html` },
+  { name: "전북", href: `${basePath}/regions/jeonbuk.html` },
+  { name: "전남", href: `${basePath}/regions/jeonnam.html` },
+  { name: "경북", href: `${basePath}/regions/gyeongbuk.html` },
+  { name: "경남", href: `${basePath}/regions/gyeongnam.html` },
+  { name: "제주", href: `${basePath}/regions/jeju.html` }
 ];
 
 const searchInput = document.querySelector("#searchInput");
