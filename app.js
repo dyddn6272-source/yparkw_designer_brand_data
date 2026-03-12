@@ -122,21 +122,16 @@ const shell = (content) => `
     <header class="topbar">
       <div class="brandmark">
         <strong>Stylist Brand Archive</strong>
-        <span>촬영 전날에도 바로 쓰는 한국 디자이너 브랜드 소싱 툴</span>
+        <span>필요한 기능만 바로 쓰는 브랜드 소싱 툴</span>
       </div>
       <nav class="main-nav">
         ${navLink("브랜드 찾기", "brands.html", page === "brands")}
         ${navLink("지도", "map.html", page === "map")}
-        ${navLink("무드보드", "moodboard.html", page === "moodboard")}
-        ${navLink("대여·협찬", "rental.html", page === "rental")}
-        ${navLink("업데이트", "updates.html", page === "updates")}
-        ${navLink("제보/수정", "report.html", page === "report")}
-        ${navLink("관리자", "admin.html", page === "admin")}
+        ${navLink("저장", "moodboard.html", page === "moodboard")}
+        ${navLink("더보기", "updates.html", page === "updates" || page === "rental" || page === "report" || page === "admin")}
       </nav>
       <div class="utility-nav">
-        <a class="utility-button" href="brands.html">검색</a>
-        <a class="utility-button" href="moodboard.html">내 저장</a>
-        <a class="utility-button" href="brands.html?sort=recent">최근 본 브랜드</a>
+        <a class="utility-button" href="brands.html?sort=recent">최근 본</a>
         <button id="themeToggle" class="theme-toggle" type="button">다크모드</button>
       </div>
     </header>
@@ -350,9 +345,7 @@ function homePage() {
 function brandsPage() {
   return shell(`
     <section class="section">
-      <div class="section-head">
-        <div><p class="eyebrow">Brand Finder</p><h2>브랜드 찾기</h2><p class="subtle">지역, 카테고리, 무드, 실무 필터를 함께 걸어 빠르게 후보를 좁힙니다.</p></div>
-      </div>
+      <div class="section-head compact-head"><div><h2>브랜드 찾기</h2></div></div>
       <div class="brand-list-layout">
         <aside class="sidebar">
           <div class="panel">
@@ -370,7 +363,7 @@ function brandsPage() {
           </div>
         </aside>
         <div>
-          <div class="section-head"><div><h2>결과</h2><p id="brandResultText" class="subtle">전체 브랜드를 불러오는 중입니다.</p></div></div>
+          <div class="section-head compact-head"><div><h2>결과</h2><p id="brandResultText" class="subtle">전체 브랜드를 불러오는 중입니다.</p></div></div>
           <div class="results-toolbar">
             <div id="resultMeta" class="result-meta"></div>
             <select id="sortSelect" class="filter-select">
@@ -481,12 +474,10 @@ function mapPage() {
   const routeSaved = storageGet(routeKey).map((id) => byId[id]).filter(Boolean);
   return shell(`
     <section class="section">
-      <div class="section-head"><div><p class="eyebrow">Map & Route</p><h2>지도</h2><p class="subtle">지역별 군집화와 하루 동선 기준으로 브랜드를 확인합니다.</p></div></div>
+      <div class="section-head compact-head"><div><h2>지도</h2><p class="subtle">${region} 기준 동선과 저장 목록만 봅니다.</p></div></div>
       <div class="map-layout">
         <aside class="panel sidebar">
-          <div class="filter-group"><label>지역 탭</label><div class="pill-row">${["서울", "부산", "대구", "경기", "제주"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
-          <div class="filter-group"><label>핵심 지역</label><div class="pill-row">${["성수", "한남", "청담", "도산", "서촌"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
-          <div class="filter-group"><label>실무 버튼</label><div class="pill-row">${["현재 범위", "도보 15분", "대여 가능", "협찬 가능", "동선 저장"].map((item) => `<span class="pill">${item}</span>`).join("")}</div></div>
+          <div class="filter-group"><label>지역</label><div class="pill-row">${["서울", "성수", "한남", "청담", "도산", "서촌", "부산"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
           <div class="map-list">${filtered.slice(0, 6).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p><div class="action-row"><button class="mini-button" data-route-brand="${brand.id}" type="button">동선 담기</button><a class="mini-button" href="${brand.googleMapUrl}" target="_blank" rel="noreferrer">구글맵</a></div></div>`).join("")}</div>
           <div class="detail-block">
             <h3>저장된 하루 코스</h3>
@@ -500,7 +491,7 @@ function mapPage() {
           </div>
         </aside>
         <div class="map-stage">
-          <div class="section-head"><div><h2>${region} 쇼룸 동선</h2><p class="subtle">실제 카카오 지도로 브랜드 포인트를 확인하고 외부 지도 앱으로 이어서 열 수 있습니다.</p></div></div>
+          <div class="section-head compact-head"><div><h2>${region} 쇼룸 동선</h2></div></div>
           <div class="map-toolbar">
             <span class="pill">핀 ${filtered.length}개</span>
             <span class="pill" data-route-count>동선 저장 ${routeSaved.length}개</span>
@@ -526,13 +517,10 @@ function moodboardPage() {
     .filter((item) => item.brand);
   return shell(`
     <section class="section">
-      <div class="section-head"><div><p class="eyebrow">Moodboard</p><h2>무드보드</h2><p class="subtle">브랜드를 저장하고, 촬영 목적 태그와 노트를 붙여 후보군을 정리합니다.</p></div></div>
+      <div class="section-head compact-head"><div><h2>저장</h2><p class="subtle">저장한 브랜드만 정리합니다.</p></div></div>
       <div class="section-grid-2">
         <div class="section-card">
           <div class="board-toolbar">
-            <span class="pill">2026 봄 패션 화보</span>
-            <span class="pill">배우 협찬 후보</span>
-            <span class="pill">성수 쇼룸 하루 일정</span>
             <button id="exportPdf" class="mini-button" type="button">PDF 내보내기</button>
           </div>
           <div id="savedBoard" class="map-list">
@@ -559,10 +547,7 @@ function moodboardPage() {
             `).join("") : `<div class="board-empty"><strong>아직 저장된 브랜드가 없습니다.</strong><p>브랜드 카드에서 무드보드 담기를 누르면 여기에 쌓입니다.</p></div>`}
           </div>
         </div>
-        <div class="section-card">
-          <h2>추천 후보</h2>
-          <div class="map-list">${brands.slice(0, 8).map((brand) => `<div class="board-item"><strong>${brand.name}</strong><p>${brand.styles.join(", ")}</p><button class="mini-button" data-save-brand="${brand.id}" type="button">무드보드 담기</button></div>`).join("")}</div>
-        </div>
+        <div class="section-card"><strong>빠른 이동</strong><div class="map-list"><a class="map-item" href="brands.html"><strong>브랜드 찾기</strong><p>저장할 브랜드 더 보기</p></a><a class="map-item" href="map.html"><strong>지도</strong><p>동선 확인으로 이동</p></a></div></div>
       </div>
     </section>
   `);
@@ -572,11 +557,14 @@ function rentalPage() {
   const filtered = brands.filter((brand) => brand.loan !== "미확인" || brand.sponsorship !== "미확인");
   return shell(`
     <section class="section">
-      <div class="section-head"><div><p class="eyebrow">Loan & Sponsorship</p><h2>대여 · 협찬</h2><p class="subtle">촬영용 샘플 문의와 셀럽 협찬 가능성을 실무 기준으로 보는 페이지입니다.</p></div></div>
-      <div class="section-grid-4">
-        ${["대여 가능한 브랜드만 보기", "협찬 가능한 브랜드만 보기", "응답 빠른 브랜드", "최근 정책 변경 브랜드"].map((item) => `<div class="section-card"><strong>${item}</strong><p class="subtle">운영 검수와 문의 기록 기반으로 확장할 수 있는 카드 구조입니다.</p></div>`).join("")}
+      <div class="section-head compact-head"><div><h2>대여 · 협찬</h2><p class="subtle">대여나 협찬 판단이 필요한 브랜드만 봅니다.</p></div></div>
+      <div class="results-toolbar">
+        <div class="result-meta">
+          <span class="pill">대상 ${filtered.length}개</span>
+          <span class="pill">대여 메모 우선</span>
+        </div>
       </div>
-      <div class="brand-grid" style="margin-top:16px;">${filtered.slice(0, 10).map(renderBrandCard).join("")}</div>
+      <div class="brand-grid">${filtered.slice(0, 10).map(renderBrandCard).join("")}</div>
     </section>
   `);
 }
@@ -589,14 +577,21 @@ function updatesPage() {
   }));
   return shell(`
     <section class="section">
-      <div class="section-head"><div><p class="eyebrow">Updates</p><h2>업데이트</h2><p class="subtle">살아있는 데이터라는 신뢰를 주는 운영 로그 페이지입니다.</p></div></div>
-      <div class="section-grid-4">
-        <div class="section-card"><strong>신규 등록 브랜드</strong><p class="subtle">12개</p></div>
-        <div class="section-card"><strong>주소 업데이트</strong><p class="subtle">5건</p></div>
-        <div class="section-card"><strong>폐점/이전 반영</strong><p class="subtle">2건</p></div>
-        <div class="section-card"><strong>대여 정책 변경</strong><p class="subtle">3건</p></div>
+      <div class="section-head compact-head"><div><h2>더보기</h2><p class="subtle">업데이트와 제보 화면으로 연결됩니다.</p></div></div>
+      <div class="section-grid-2">
+        <div class="section-card">
+          <strong>업데이트</strong>
+          <div class="timeline" style="margin-top:12px;">${updates.slice(0, 6).map((item) => `<div class="timeline-item"><span class="date">${item.date}</span><strong>${item.title}</strong><p>${item.text}</p></div>`).join("")}</div>
+        </div>
+        <div class="section-card">
+          <strong>바로가기</strong>
+          <div class="map-list">
+            <a class="map-item" href="rental.html"><strong>대여 · 협찬</strong><p>샘플 문의 기준으로 보기</p></a>
+            <a class="map-item" href="report.html"><strong>제보 / 수정</strong><p>정보 변경 요청 보내기</p></a>
+            <a class="map-item" href="admin.html"><strong>관리자</strong><p>운영 검수 화면 열기</p></a>
+          </div>
+        </div>
       </div>
-      <div class="timeline" style="margin-top:16px;">${updates.map((item) => `<div class="timeline-item"><span class="date">${item.date}</span><strong>${item.title}</strong><p>${item.text}</p></div>`).join("")}</div>
     </section>
   `);
 }
@@ -604,7 +599,7 @@ function updatesPage() {
 function reportPage() {
   return shell(`
     <section class="section">
-      <div class="section-head"><div><p class="eyebrow">Submit</p><h2>제보 / 수정</h2><p class="subtle">사용자 제출 → 관리자 검토 → 승인 후 반영 구조를 염두에 둔 폼입니다.</p></div></div>
+      <div class="section-head compact-head"><div><h2>제보 / 수정</h2><p class="subtle">바로 제출하는 간단한 폼입니다.</p></div></div>
       <div class="section-grid-2">
         <form id="reportForm" class="report-card">
           <div class="filter-group"><label>브랜드명</label><input name="brand" required /></div>
@@ -614,11 +609,11 @@ function reportPage() {
           <button class="primary-button" type="submit">제출하기</button>
         </form>
         <div class="report-card">
-          <h2>운영 방식</h2>
+          <h2>안내</h2>
           <div class="timeline">
-            <div class="timeline-item"><strong>1. 사용자가 제출</strong><p>브랜드명, 수정 종류, 참고 링크를 남깁니다.</p></div>
-            <div class="timeline-item"><strong>2. 관리자 검토</strong><p>공식 사이트와 SNS, 현장 연락으로 정보를 검수합니다.</p></div>
-            <div class="timeline-item"><strong>3. 승인 후 반영</strong><p>업데이트 히스토리에 로그를 남기고 최근 검수일을 갱신합니다.</p></div>
+            <div class="timeline-item"><strong>주소 수정</strong><p>쇼룸 이전이나 매장 변경 제보</p></div>
+            <div class="timeline-item"><strong>연락처 수정</strong><p>문의 채널 변경 요청</p></div>
+            <div class="timeline-item"><strong>신규 브랜드</strong><p>추가할 브랜드 제안</p></div>
           </div>
           <p id="reportStatus" class="report-help">제출하면 브라우저 로컬 저장소에 임시 기록합니다.</p>
         </div>

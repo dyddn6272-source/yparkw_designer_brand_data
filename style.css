@@ -62,9 +62,17 @@ p { line-height: 1.6; }
   padding: 16px 18px; border-radius: 24px; margin-bottom: 16px;
 }
 .brandmark strong { display: block; font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.brandmark span { font-size: 0.9rem; }
 .brandmark span, .utility-note, .meta, .subtle, .timeline-item p, .report-help, .brand-card p, .detail-list, .stat-label { color: var(--muted); }
 .main-nav, .utility-nav, .quick-filters, .quick-actions, .chip-row, .pill-row, .detail-actions, .mood-grid, .curation-grid, .page-actions, .brand-tags, .action-row, .board-toolbar {
   display: flex; flex-wrap: wrap; gap: 10px;
+}
+.main-nav {
+  flex: 1;
+  justify-content: center;
+}
+.utility-nav {
+  justify-content: end;
 }
 .nav-link, .utility-button, .quick-chip, .action-card, .tag, .mini-button, .filter-select, .pill, .save-chip, .tab-button, .theme-toggle {
   border-radius: var(--radius-pill); border: 1px solid var(--line); color: var(--text); text-decoration: none;
@@ -95,6 +103,12 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
 .section { margin-top: 18px; }
 .section-head { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 16px; }
 .section-head h2 { font-size: clamp(2rem, 3vw, 3.2rem); }
+.compact-head {
+  margin-bottom: 12px;
+}
+.compact-head h2 {
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+}
 .section-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
 .section-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
 .section-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
@@ -365,5 +379,6 @@ body[data-theme="dark"] .floating-toast {
   .hero, .brand-list-layout, .detail-grid, .map-layout, .section-grid-4, .section-grid-3, .section-grid-2, .brand-grid, .brand-meta-grid, .module-panel { grid-template-columns: 1fr; }
   .sidebar { position: static; }
   .topbar, .section-head, .cta-band, .footer { flex-direction: column; align-items: start; }
+  .main-nav, .utility-nav { justify-content: start; }
   .admin-grid-2 { grid-template-columns: 1fr; }
 }
