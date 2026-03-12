@@ -7,6 +7,7 @@ const reportKey = "stylist-report-drafts";
 const routeKey = "stylist-route-plan";
 const moodboardStateKey = "stylist-moodboard-state";
 const brandOverrideKey = "stylist-brand-overrides";
+const customBrandKey = "stylist-custom-brands";
 const KAKAO_MAP_KEY = "3f221aae00c4902d862593ba1dd601c3";
 
 const knownMeta = {
@@ -109,7 +110,8 @@ let brands = [];
 let byId = {};
 
 function refreshBrandCache() {
-  brands = (window.BRAND_DATA || []).map(enrichBrand).map(applyBrandOverrides);
+  const customBrands = storageGet(customBrandKey);
+  brands = [...(window.BRAND_DATA || []), ...customBrands].map(enrichBrand).map(applyBrandOverrides);
   byId = Object.fromEntries(brands.map((brand) => [brand.id, brand]));
 }
 
@@ -576,6 +578,7 @@ function adminPage() {
   const officialCount = brands.filter((brand) => brand.qualityTone === "official").length;
   const loanCount = brands.filter((brand) => brand.loan !== "미확인").length;
   const editable = brands[0];
+  const customBrands = storageGet(customBrandKey).slice(0, 6);
   return shell(`
     <section class="section">
       <div class="section-head"><div><p class="eyebrow">Admin Review</p><h2>검수 대시보드</h2><p class="subtle">브랜드 상태, 최근 검수, 사용자 제보를 한 화면에서 운영하는 관리자용 시뮬레이션입니다.</p></div></div>
@@ -620,6 +623,38 @@ function adminPage() {
                 <button id="adminResetBrand" class="secondary-button" type="button">브랜드 초기화</button>
               </div>
               <p id="adminBrandStatus" class="report-help">저장 즉시 현재 페이지 상태와 로컬 데이터가 함께 갱신됩니다.</p>
+            </form>
+          </div>
+          <div class="section-card">
+            <div class="section-head"><div><h2>신규 브랜드 등록</h2><p class="subtle">관리자에서 직접 추가한 브랜드가 브랜드 찾기와 메인 화면에 바로 반영됩니다.</p></div></div>
+            <form id="adminCreateForm" class="admin-editor">
+              <div class="filter-group"><label>브랜드명</label><input name="name" required placeholder="예: Studio Example" /></div>
+              <div class="filter-group"><label>한 줄 설명</label><textarea name="summary" required placeholder="브랜드 특징을 짧고 명확하게 입력"></textarea></div>
+              <div class="admin-grid-2">
+                <div class="filter-group"><label>지역</label><input name="regions" required placeholder="서울, 부산" /></div>
+                <div class="filter-group"><label>쇼룸 주소</label><input name="showroom" required placeholder="서울 성동구 ..." /></div>
+              </div>
+              <div class="admin-grid-2">
+                <div class="filter-group"><label>카테고리</label><input name="categories" required placeholder="의류, 가방, 액세서리" /></div>
+                <div class="filter-group"><label>스타일 태그</label><input name="styles" required placeholder="미니멀, 컨템포러리, 스트릿" /></div>
+              </div>
+              <div class="admin-grid-2">
+                <div class="filter-group"><label>공식 사이트</label><input name="officialSite" placeholder="https://..." /></div>
+                <div class="filter-group"><label>출처 링크</label><input name="sourceUrl" placeholder="https://..." /></div>
+              </div>
+              <div class="admin-grid-2">
+                <div class="filter-group"><label>타깃</label><input name="target" placeholder="여성, 유니섹스" /></div>
+                <div class="filter-group"><label>가격대</label><input name="price" placeholder="$$$" /></div>
+              </div>
+              <div class="admin-grid-2">
+                <div class="filter-group"><label>대여 가능 여부</label><input name="loan" placeholder="문의 가능" /></div>
+                <div class="filter-group"><label>협찬 가능 여부</label><input name="sponsorship" placeholder="문의 가능" /></div>
+              </div>
+              <div class="action-row">
+                <button class="primary-button" type="submit">브랜드 등록</button>
+                <button id="adminCreateReset" class="secondary-button" type="button">입력 초기화</button>
+              </div>
+              <p id="adminCreateStatus" class="report-help">입력 후 등록하면 로컬 브랜드 데이터에 즉시 추가됩니다.</p>
             </form>
           </div>
         </aside>
@@ -672,6 +707,21 @@ function adminPage() {
           <div class="section-card">
             <div class="section-head"><div><h2>실시간 프리뷰</h2><p class="subtle">방금 수정한 브랜드의 핵심 실무 정보 미리보기</p></div></div>
             <div id="adminPreview"></div>
+          </div>
+          <div class="section-card">
+            <div class="section-head"><div><h2>최근 등록 브랜드</h2><p class="subtle">관리자에서 직접 추가한 로컬 브랜드 목록</p></div></div>
+            <div id="adminCustomBrandList" class="map-list">
+              ${customBrands.length ? customBrands.map((brand) => `
+                <div class="map-item">
+                  <strong>${brand.name}</strong>
+                  <p>${brand.showroom}</p>
+                  <div class="action-row">
+                    <span class="status-chip ok">로컬 등록</span>
+                    <button class="mini-button" data-custom-remove="${slug(brand.name)}" type="button">삭제</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="board-empty"><strong>직접 등록한 브랜드가 없습니다.</strong><p>왼쪽 폼에서 신규 브랜드를 추가하면 여기에 바로 표시됩니다.</p></div>`}
+            </div>
           </div>
         </div>
       </div>
@@ -1107,6 +1157,8 @@ function bindAdminPage() {
   const form = document.querySelector("#adminBrandForm");
   const status = document.querySelector("#adminBrandStatus");
   const preview = document.querySelector("#adminPreview");
+  const createForm = document.querySelector("#adminCreateForm");
+  const createStatus = document.querySelector("#adminCreateStatus");
 
   const fillAdminForm = (brandId) => {
     const brand = byId[brandId];
@@ -1201,6 +1253,86 @@ function bindAdminPage() {
       reports.splice(index, 1);
       storageSet(reportKey, reports, "report");
       showToast("제보를 반려 처리했습니다.");
+    });
+  });
+
+  if (createForm) {
+    createForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(createForm).entries());
+      const list = storageGet(customBrandKey);
+      const name = data.name.trim();
+      const id = slug(name);
+      if (!name) {
+        return;
+      }
+      const record = {
+        name,
+        categories: data.categories.split(",").map((item) => item.trim()).filter(Boolean),
+        styles: data.styles.split(",").map((item) => item.trim()).filter(Boolean),
+        regions: data.regions.split(",").map((item) => item.trim()).filter(Boolean),
+        summary: data.summary.trim(),
+        styleNote: `${data.styles.trim()} 기반 신규 등록 브랜드`,
+        showroom: data.showroom.trim(),
+        officialSite: data.officialSite.trim(),
+        sourceUrl: data.sourceUrl.trim() || data.officialSite.trim(),
+        qualityTone: data.officialSite.trim() ? "official" : "mixed",
+        locations: [
+          {
+            type: "쇼룸",
+            name: `${name} 쇼룸`,
+            address: data.showroom.trim()
+          }
+        ]
+      };
+      const deduped = list.filter((item) => slug(item.name) !== id);
+      deduped.unshift(record);
+      storageSet(customBrandKey, deduped, "custom-brand");
+
+      const overrides = objectStorageGet(brandOverrideKey);
+      overrides[id] = {
+        target: data.target.trim() || "유니섹스",
+        price: data.price.trim() || "$$$",
+        loan: data.loan.trim() || "미확인",
+        sponsorship: data.sponsorship.trim() || "미확인",
+        response: "확인 필요",
+        operatingHours: "운영 시간 확인 필요",
+        bookingMethod: "방문 전 문의 권장",
+        contactChannel: data.officialSite.trim() ? "공식 사이트 확인" : "공식 채널 확인 필요",
+        prInfo: "PR/세일즈 문의 정보 확인 필요",
+        caution: "신규 등록 브랜드로 세부 정보 추가 검수 필요"
+      };
+      storageSet(brandOverrideKey, overrides, "brand-override");
+
+      createForm.reset();
+      if (createStatus) {
+        createStatus.textContent = `${name} 브랜드를 로컬 데이터에 등록했고 즉시 반영했습니다.`;
+      }
+      showToast("신규 브랜드를 바로 등록했습니다.");
+      render();
+    });
+  }
+
+  const createReset = document.querySelector("#adminCreateReset");
+  if (createReset && createForm) {
+    createReset.addEventListener("click", () => {
+      createForm.reset();
+      if (createStatus) {
+        createStatus.textContent = "입력값을 초기화했습니다.";
+      }
+    });
+  }
+
+  document.querySelectorAll("[data-custom-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.customRemove;
+      const list = storageGet(customBrandKey).filter((item) => slug(item.name) !== id);
+      storageSet(customBrandKey, list, "custom-brand");
+      const overrides = objectStorageGet(brandOverrideKey);
+      delete overrides[id];
+      storageSet(brandOverrideKey, overrides, "brand-override");
+      showToast("등록한 브랜드를 삭제했습니다.");
+      render();
     });
   });
 }

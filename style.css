@@ -133,6 +133,11 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
   display: grid;
   gap: 12px;
 }
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -317,4 +322,5 @@ body[data-theme="dark"] .floating-toast {
   .hero, .brand-list-layout, .detail-grid, .map-layout, .section-grid-4, .section-grid-3, .section-grid-2, .brand-grid, .brand-meta-grid { grid-template-columns: 1fr; }
   .sidebar { position: static; }
   .topbar, .section-head, .cta-band, .footer { flex-direction: column; align-items: start; }
+  .admin-grid-2 { grid-template-columns: 1fr; }
 }
