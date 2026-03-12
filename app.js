@@ -40,9 +40,11 @@ const pageTitleNode = document.querySelector("#pageTitle");
 const pageDescriptionNode = document.querySelector("#pageDescription");
 const datasetStatusNode = document.querySelector("#datasetStatus");
 const paginationNode = document.querySelector("#pagination");
+const themeToggle = document.querySelector("#themeToggle");
 
 const PAGE_SIZE = 18;
 let currentPage = 1;
+const THEME_KEY = "designer-brand-theme";
 
 const regionFromQuery = new URLSearchParams(window.location.search).get("region") || "";
 const defaultRegion = document.body.dataset.defaultRegion || regionFromQuery;
@@ -184,6 +186,18 @@ const renderChips = (filters) => {
 
 const getBadgeLabel = (brand) => (brand.qualityTone === "official" ? "공식 확인" : "공식/회사 정보");
 
+const applyTheme = (theme) => {
+  document.body.dataset.theme = theme;
+  themeToggle.textContent = theme === "dark" ? "화이트모드" : "다크모드";
+  themeToggle.setAttribute("aria-label", theme === "dark" ? "화이트모드로 전환" : "다크모드로 전환");
+};
+
+const initializeTheme = () => {
+  const savedTheme = window.localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(savedTheme || (prefersDark ? "dark" : "light"));
+};
+
 const renderBrands = () => {
   const filters = getFilters();
   const filteredBrands = filterBrands(filters);
@@ -303,7 +317,13 @@ if (defaultRegion) {
 });
 
 resetButton.addEventListener("click", resetFilters);
+themeToggle.addEventListener("click", () => {
+  const nextTheme = document.body.dataset.theme === "dark" ? "light" : "dark";
+  window.localStorage.setItem(THEME_KEY, nextTheme);
+  applyTheme(nextTheme);
+});
 
+initializeTheme();
 buildRegionNavigation();
 renderRegionCards();
 renderBrands();
