@@ -261,15 +261,28 @@ function brandsPage() {
             <div class="filter-group"><label>지역</label><select id="regionSelect" class="filter-select"><option value="">전체 지역</option>${optionSet(brands.flatMap((b) => b.regions))}</select></div>
             <div class="filter-group"><label>카테고리</label><select id="categorySelect" class="filter-select"><option value="">전체 카테고리</option>${optionSet(brands.flatMap((b) => b.categories))}</select></div>
             <div class="filter-group"><label>무드</label><select id="moodSelect" class="filter-select"><option value="">전체 무드</option>${optionSet(brands.flatMap((b) => b.styles))}</select></div>
+            <div class="filter-group"><label>타깃</label><select id="targetSelect" class="filter-select"><option value="">전체 타깃</option>${optionSet(brands.map((b) => b.target))}</select></div>
+            <div class="filter-group"><label>가격대</label><select id="priceSelect" class="filter-select"><option value="">전체 가격대</option>${optionSet(brands.map((b) => b.price))}</select></div>
             <div class="filter-group"><label>실무 필터</label>
               <div class="pill-row">
-                ${["쇼룸 있음", "대여 가능", "협찬 가능", "빠른 응답", "최근 업데이트"].map((item) => `<button class="pill" data-work-filter="${item}" type="button">${item}</button>`).join("")}
+                ${["쇼룸 있음", "대여 가능", "협찬 가능", "빠른 응답", "최근 업데이트", "저장됨", "최근 본 브랜드"].map((item) => `<button class="pill" data-work-filter="${item}" type="button">${item}</button>`).join("")}
               </div>
             </div>
           </div>
         </aside>
         <div>
           <div class="section-head"><div><h2>결과</h2><p id="brandResultText" class="subtle">전체 브랜드를 불러오는 중입니다.</p></div></div>
+          <div class="results-toolbar">
+            <div id="resultMeta" class="result-meta"></div>
+            <select id="sortSelect" class="filter-select">
+              <option value="updated">최신 업데이트순</option>
+              <option value="name">가나다순</option>
+              <option value="loan">대여 가능 우선</option>
+              <option value="response">빠른 응답 우선</option>
+              <option value="saved">저장 많은 순</option>
+              <option value="recent">최근 본 브랜드 우선</option>
+            </select>
+          </div>
           <div id="brandResults" class="brand-grid"></div>
         </div>
       </div>
@@ -658,8 +671,12 @@ function bindBrandsPage() {
   const region = document.querySelector("#regionSelect");
   const category = document.querySelector("#categorySelect");
   const mood = document.querySelector("#moodSelect");
+  const target = document.querySelector("#targetSelect");
+  const price = document.querySelector("#priceSelect");
+  const sortSelect = document.querySelector("#sortSelect");
   const resultText = document.querySelector("#brandResultText");
   const resultGrid = document.querySelector("#brandResults");
+  const resultMeta = document.querySelector("#resultMeta");
 
   const query = new URLSearchParams(location.search);
   search.value = query.get("query") || "";
@@ -683,22 +700,58 @@ function bindBrandsPage() {
       const regionMatch = !region.value || brand.regions.includes(region.value);
       const categoryMatch = !category.value || brand.categories.includes(category.value);
       const moodMatch = !mood.value || brand.styles.includes(mood.value);
+      const targetMatch = !target.value || brand.target === target.value;
+      const priceMatch = !price.value || brand.price === price.value;
+      const savedList = storageGet(savedKey);
+      const recentList = storageGet(recentKey);
       const workMatch =
         !activeWorkFilter ||
         (activeWorkFilter === "쇼룸 있음" && brand.showroomGuide.includes("방문")) ||
         (activeWorkFilter === "대여 가능" && brand.loan !== "미확인") ||
         (activeWorkFilter === "협찬 가능" && brand.sponsorship !== "미확인") ||
         (activeWorkFilter === "빠른 응답" && brand.response === "빠름") ||
-        (activeWorkFilter === "최근 업데이트" && brand.updatedAt >= "2026-03-09");
-      return queryMatch && regionMatch && categoryMatch && moodMatch && workMatch;
+        (activeWorkFilter === "최근 업데이트" && brand.updatedAt >= "2026-03-09") ||
+        (activeWorkFilter === "저장됨" && savedList.includes(brand.id)) ||
+        (activeWorkFilter === "최근 본 브랜드" && recentList.includes(brand.id));
+      return queryMatch && regionMatch && categoryMatch && moodMatch && targetMatch && priceMatch && workMatch;
     });
 
-    resultText.textContent = `${filtered.length}개 브랜드가 현재 조건에 맞습니다.`;
-    resultGrid.innerHTML = filtered.map(renderBrandCard).join("");
+    const savedList = storageGet(savedKey);
+    const recentList = storageGet(recentKey);
+    const savedScore = (brand) => (savedList.includes(brand.id) ? 1 : 0);
+    const recentScore = (brand) => {
+      const index = recentList.indexOf(brand.id);
+      return index === -1 ? 999 : index;
+    };
+    const sorted = [...filtered].sort((left, right) => {
+      switch (sortSelect.value) {
+        case "name":
+          return left.name.localeCompare(right.name, "ko");
+        case "loan":
+          return Number(right.loan !== "미확인") - Number(left.loan !== "미확인");
+        case "response":
+          return Number(right.response === "빠름") - Number(left.response === "빠름");
+        case "saved":
+          return savedScore(right) - savedScore(left);
+        case "recent":
+          return recentScore(left) - recentScore(right);
+        case "updated":
+        default:
+          return right.updatedAt.localeCompare(left.updatedAt);
+      }
+    });
+
+    resultText.textContent = `${sorted.length}개 브랜드가 현재 조건에 맞습니다.`;
+    resultMeta.innerHTML = `
+      <span class="pill">최근 본 ${recentList.length}개</span>
+      <span class="pill">저장 ${savedList.length}개</span>
+      <span class="pill">대여 가능 ${sorted.filter((brand) => brand.loan !== "미확인").length}개</span>
+    `;
+    resultGrid.innerHTML = sorted.map(renderBrandCard).join("");
     bindShared();
   }
 
-  [search, region, category, mood].forEach((node) => node.addEventListener("input", update));
+  [search, region, category, mood, target, price, sortSelect].forEach((node) => node.addEventListener("input", update));
   update();
 }
 
