@@ -5,6 +5,7 @@ const savedKey = "stylist-saved-brands";
 const recentKey = "stylist-recent-brands";
 const reportKey = "stylist-report-drafts";
 const routeKey = "stylist-route-plan";
+const KAKAO_MAP_KEY = "3f221aae00c4902d862593ba1dd601c3";
 
 const knownMeta = {
   "LOW CLASSIC": { target: "여성", price: "$$$", season: "프리폴, 코트, 셋업", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@lowclassic", showroom: "예약 방문 가능", note: "광고, 에디토리얼 모두 강함", sample: "중간", hours: "운영 시간 사전 문의 권장", contact: "공식 사이트 문의 또는 인스타그램 DM 확인", pr: "세일즈/PR 공개 메일 별도 확인 필요", booking: "쇼룸 방문 전 예약 문의 권장", caution: "샘플 수량과 사이즈 폭은 시즌별 변동 가능" },
@@ -33,6 +34,8 @@ const storageGet = (key) => JSON.parse(localStorage.getItem(key) || "[]");
 const storageSet = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 const googleMapLink = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 const naverMapLink = (address) => `https://map.naver.com/p/search/${encodeURIComponent(address)}`;
+const brandAddressText = (brand) => [brand.showroom, ...brand.locations.flatMap((location) => [location.name, location.address])].join(" ");
+const matchesRegionKeyword = (brand, keyword) => !keyword || brand.regions.includes(keyword) || brandAddressText(brand).includes(keyword);
 
 const enrichBrand = (brand, index) => {
   const extra = knownMeta[brand.name] || {};
@@ -356,7 +359,7 @@ function detailPage() {
 
 function mapPage() {
   const region = new URLSearchParams(location.search).get("region") || "서울";
-  const filtered = brands.filter((brand) => brand.regions.includes(region));
+  const filtered = brands.filter((brand) => matchesRegionKeyword(brand, region));
   const routeSaved = storageGet(routeKey).map((id) => byId[id]).filter(Boolean);
   return shell(`
     <section class="section">
@@ -364,6 +367,7 @@ function mapPage() {
       <div class="map-layout">
         <aside class="panel sidebar">
           <div class="filter-group"><label>지역 탭</label><div class="pill-row">${["서울", "부산", "대구", "경기", "제주"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
+          <div class="filter-group"><label>핵심 지역</label><div class="pill-row">${["성수", "한남", "청담", "도산", "서촌"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
           <div class="filter-group"><label>실무 버튼</label><div class="pill-row">${["현재 범위", "도보 15분", "대여 가능", "협찬 가능", "동선 저장"].map((item) => `<span class="pill">${item}</span>`).join("")}</div></div>
           <div class="map-list">${filtered.slice(0, 6).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p><div class="action-row"><button class="mini-button" data-route-brand="${brand.id}" type="button">동선 담기</button><a class="mini-button" href="${brand.googleMapUrl}" target="_blank" rel="noreferrer">구글맵</a></div></div>`).join("")}</div>
           <div class="detail-block">
@@ -378,10 +382,13 @@ function mapPage() {
           </div>
         </aside>
         <div class="map-stage">
-          <div class="section-head"><div><h2>${region} 쇼룸 동선</h2><p class="subtle">지하철역 기준 이동과 촬영용 방문 순서를 상상할 수 있게 구성했습니다.</p></div></div>
-          <div class="mock-map">
-            ${filtered.slice(0, 8).map((brand, index) => `<span class="map-pin" style="left:${18 + (index % 4) * 18}%;top:${24 + Math.floor(index / 4) * 24}%"></span>`).join("")}
+          <div class="section-head"><div><h2>${region} 쇼룸 동선</h2><p class="subtle">실제 카카오 지도로 브랜드 포인트를 확인하고 외부 지도 앱으로 이어서 열 수 있습니다.</p></div></div>
+          <div class="map-toolbar">
+            <span class="pill">핀 ${filtered.length}개</span>
+            <span class="pill">동선 저장 ${routeSaved.length}개</span>
+            <a class="mini-button" href="${filtered[0] ? filtered[0].googleMapUrl : googleMapLink(region)}" target="_blank" rel="noreferrer">현재 지역 구글맵 열기</a>
           </div>
+          <div id="kakaoMap" class="map-canvas" data-region="${region}"></div>
           <div class="map-list">${filtered.slice(0, 4).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.name} · ${brand.primaryLocation.address}</p><div class="action-row"><button class="mini-button" data-route-brand="${brand.id}" type="button">이 동선 저장</button><a class="mini-button" href="${brand.naverMapUrl}" target="_blank" rel="noreferrer">네이버지도</a><a class="mini-button" href="brand.html?brand=${brand.id}">상세</a></div></div>`).join("")}</div>
         </div>
       </div>
@@ -496,6 +503,69 @@ function render() {
   if (page === "map") bindMapPage();
 }
 
+function loadKakaoMapSdk() {
+  if (window.kakao && window.kakao.maps) {
+    return Promise.resolve(window.kakao);
+  }
+
+  if (window.__kakaoMapLoadingPromise) {
+    return window.__kakaoMapLoadingPromise;
+  }
+
+  window.__kakaoMapLoadingPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY}&autoload=false&libraries=services`;
+    script.onload = () => window.kakao.maps.load(() => resolve(window.kakao));
+    script.onerror = () => reject(new Error("Kakao map sdk load failed"));
+    document.head.append(script);
+  });
+
+  return window.__kakaoMapLoadingPromise;
+}
+
+async function initKakaoMap() {
+  const mapNode = document.querySelector("#kakaoMap");
+  if (!mapNode) {
+    return;
+  }
+
+  const kakao = await loadKakaoMapSdk();
+  const region = mapNode.dataset.region || "서울";
+  const filtered = brands.filter((brand) => matchesRegionKeyword(brand, region));
+  const map = new kakao.maps.Map(mapNode, {
+    center: new kakao.maps.LatLng(37.5447, 127.0557),
+    level: 7
+  });
+  const geocoder = new kakao.maps.services.Geocoder();
+  const bounds = new kakao.maps.LatLngBounds();
+  let placed = 0;
+
+  await Promise.all(
+    filtered.slice(0, 12).map(
+      (brand) =>
+        new Promise((resolve) => {
+          geocoder.addressSearch(brand.primaryLocation.address, (result, status) => {
+            if (status === kakao.maps.services.Status.OK) {
+              const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+              const marker = new kakao.maps.Marker({ map, position: coords });
+              const info = new kakao.maps.InfoWindow({
+                content: `<div style="padding:10px 12px;font-size:12px;line-height:1.4;"><strong>${brand.name}</strong><br/>${brand.primaryLocation.address}</div>`
+              });
+              kakao.maps.event.addListener(marker, "click", () => info.open(map, marker));
+              bounds.extend(coords);
+              placed += 1;
+            }
+            resolve();
+          });
+        })
+    )
+  );
+
+  if (placed > 0) {
+    map.setBounds(bounds);
+  }
+}
+
 function bindShared() {
   const toggle = document.querySelector("#themeToggle");
   const savedTheme = localStorage.getItem(themeKey) || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -606,6 +676,12 @@ function bindReportPage() {
 }
 
 function bindMapPage() {
+  initKakaoMap().catch(() => {
+    const mapNode = document.querySelector("#kakaoMap");
+    if (mapNode) {
+      mapNode.innerHTML = `<div class="map-fallback"><strong>지도를 불러오지 못했습니다.</strong><p>카카오맵 앱 키 허용 도메인과 네트워크 상태를 확인하세요.</p></div>`;
+    }
+  });
   const clearRoute = document.querySelector("#clearRoute");
   if (!clearRoute) {
     return;
