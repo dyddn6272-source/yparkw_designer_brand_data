@@ -6,6 +6,7 @@ const recentKey = "stylist-recent-brands";
 const reportKey = "stylist-report-drafts";
 const routeKey = "stylist-route-plan";
 const moodboardStateKey = "stylist-moodboard-state";
+const brandOverrideKey = "stylist-brand-overrides";
 const KAKAO_MAP_KEY = "3f221aae00c4902d862593ba1dd601c3";
 
 const knownMeta = {
@@ -31,8 +32,21 @@ const moodMap = {
 };
 
 const slug = (value) => value.toLowerCase().replace(/\./g, "").replace(/[^a-z0-9가-힣]+/g, "-");
-const storageGet = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-const storageSet = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+const readJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+};
+const storageGet = (key) => readJson(key, []);
+const objectStorageGet = (key) => readJson(key, {});
+const emitStateChange = (type, detail = {}) => window.dispatchEvent(new CustomEvent("stylist:state", { detail: { type, ...detail } }));
+const storageSet = (key, value, type = "storage") => {
+  localStorage.setItem(key, JSON.stringify(value));
+  emitStateChange(type, { key, value });
+};
 const googleMapLink = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 const naverMapLink = (address) => `https://map.naver.com/p/search/${encodeURIComponent(address)}`;
 const brandAddressText = (brand) => [brand.showroom, ...brand.locations.flatMap((location) => [location.name, location.address])].join(" ");
@@ -41,7 +55,7 @@ const boardState = () => {
   const saved = storageGet(moodboardStateKey);
   return Array.isArray(saved) ? saved : [];
 };
-const saveBoardState = (items) => storageSet(moodboardStateKey, items);
+const saveBoardState = (items) => storageSet(moodboardStateKey, items, "board");
 
 const enrichBrand = (brand, index) => {
   const extra = knownMeta[brand.name] || {};
@@ -74,8 +88,32 @@ const enrichBrand = (brand, index) => {
   };
 };
 
-const brands = (window.BRAND_DATA || []).map(enrichBrand);
-const byId = Object.fromEntries(brands.map((brand) => [brand.id, brand]));
+const applyBrandOverrides = (brand) => {
+  const overrides = objectStorageGet(brandOverrideKey)[brand.id] || {};
+  const nextPrimaryAddress = overrides.primaryLocationAddress || overrides.showroom || brand.primaryLocation.address;
+  const primaryLocation = {
+    ...brand.primaryLocation,
+    address: nextPrimaryAddress
+  };
+  return {
+    ...brand,
+    ...overrides,
+    primaryLocation,
+    showroom: overrides.showroom || brand.showroom,
+    googleMapUrl: googleMapLink(nextPrimaryAddress),
+    naverMapUrl: naverMapLink(nextPrimaryAddress)
+  };
+};
+
+let brands = [];
+let byId = {};
+
+function refreshBrandCache() {
+  brands = (window.BRAND_DATA || []).map(enrichBrand).map(applyBrandOverrides);
+  byId = Object.fromEntries(brands.map((brand) => [brand.id, brand]));
+}
+
+refreshBrandCache();
 
 const shell = (content) => `
   <div class="shell">
@@ -113,6 +151,8 @@ function navLink(label, href, active) {
 }
 
 function renderBrandCard(brand) {
+  const saved = storageGet(savedKey).includes(brand.id);
+  const routed = storageGet(routeKey).includes(brand.id);
   return `
     <article class="brand-card">
       <div class="brand-head">
@@ -135,8 +175,8 @@ function renderBrandCard(brand) {
       <div class="action-row">
         <a class="mini-button" href="brand.html?brand=${brand.id}">상세 보기</a>
         <a class="mini-button" href="map.html?region=${encodeURIComponent(brand.regions[0])}">지도에서 보기</a>
-        <button class="mini-button" data-save-brand="${brand.id}" type="button">무드보드 담기</button>
-        <button class="mini-button" data-route-brand="${brand.id}" type="button">동선 담기</button>
+        <button class="mini-button" data-save-brand="${brand.id}" type="button">${saved ? "저장됨" : "무드보드 담기"}</button>
+        <button class="mini-button" data-route-brand="${brand.id}" type="button">${routed ? "동선 저장됨" : "동선 담기"}</button>
       </div>
     </article>
   `;
@@ -405,7 +445,7 @@ function mapPage() {
           <div class="section-head"><div><h2>${region} 쇼룸 동선</h2><p class="subtle">실제 카카오 지도로 브랜드 포인트를 확인하고 외부 지도 앱으로 이어서 열 수 있습니다.</p></div></div>
           <div class="map-toolbar">
             <span class="pill">핀 ${filtered.length}개</span>
-            <span class="pill">동선 저장 ${routeSaved.length}개</span>
+            <span class="pill" data-route-count>동선 저장 ${routeSaved.length}개</span>
             <a class="mini-button" href="${filtered[0] ? filtered[0].googleMapUrl : googleMapLink(region)}" target="_blank" rel="noreferrer">현재 지역 구글맵 열기</a>
           </div>
           <div id="kakaoMap" class="map-canvas" data-region="${region}"></div>
@@ -535,6 +575,7 @@ function adminPage() {
   const recentlyChecked = [...brands].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8);
   const officialCount = brands.filter((brand) => brand.qualityTone === "official").length;
   const loanCount = brands.filter((brand) => brand.loan !== "미확인").length;
+  const editable = brands[0];
   return shell(`
     <section class="section">
       <div class="section-head"><div><p class="eyebrow">Admin Review</p><h2>검수 대시보드</h2><p class="subtle">브랜드 상태, 최근 검수, 사용자 제보를 한 화면에서 운영하는 관리자용 시뮬레이션입니다.</p></div></div>
@@ -556,6 +597,30 @@ function adminPage() {
               <button class="mini-button" type="button">무드 분류 관리</button>
               <button class="mini-button" type="button">업데이트 로그 생성</button>
             </div>
+          </div>
+          <div class="section-card">
+            <div class="section-head"><div><h2>브랜드 즉시 수정</h2><p class="subtle">운영 메모와 실무 필드를 저장하면 새로고침 없이 바로 반영됩니다.</p></div></div>
+            <form id="adminBrandForm" class="admin-editor">
+              <div class="filter-group">
+                <label>브랜드 선택</label>
+                <select id="adminBrandSelect" class="filter-select">
+                  ${brands.map((brand) => `<option value="${brand.id}" ${brand.id === editable.id ? "selected" : ""}>${brand.name}</option>`).join("")}
+                </select>
+              </div>
+              <div class="filter-group"><label>대여 가능 여부</label><input name="loan" value="${editable.loan}" /></div>
+              <div class="filter-group"><label>협찬 가능 여부</label><input name="sponsorship" value="${editable.sponsorship}" /></div>
+              <div class="filter-group"><label>응답 속도</label><input name="response" value="${editable.response}" /></div>
+              <div class="filter-group"><label>운영 시간</label><input name="operatingHours" value="${editable.operatingHours}" /></div>
+              <div class="filter-group"><label>예약 메모</label><textarea name="bookingMethod">${editable.bookingMethod}</textarea></div>
+              <div class="filter-group"><label>문의 채널</label><textarea name="contactChannel">${editable.contactChannel}</textarea></div>
+              <div class="filter-group"><label>PR / 세일즈</label><textarea name="prInfo">${editable.prInfo}</textarea></div>
+              <div class="filter-group"><label>유의사항</label><textarea name="caution">${editable.caution}</textarea></div>
+              <div class="action-row">
+                <button class="primary-button" type="submit">바로 반영</button>
+                <button id="adminResetBrand" class="secondary-button" type="button">브랜드 초기화</button>
+              </div>
+              <p id="adminBrandStatus" class="report-help">저장 즉시 현재 페이지 상태와 로컬 데이터가 함께 갱신됩니다.</p>
+            </form>
           </div>
         </aside>
         <div class="dashboard-stack">
@@ -604,6 +669,10 @@ function adminPage() {
               </table>
             ` : `<div class="board-empty"><strong>현재 대기 중인 제보가 없습니다.</strong><p>제보 페이지에서 제출하면 여기에 표시됩니다.</p></div>`}
           </div>
+          <div class="section-card">
+            <div class="section-head"><div><h2>실시간 프리뷰</h2><p class="subtle">방금 수정한 브랜드의 핵심 실무 정보 미리보기</p></div></div>
+            <div id="adminPreview"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -615,6 +684,7 @@ function optionSet(values) {
 }
 
 function render() {
+  refreshBrandCache();
   const content = {
     home: homePage,
     brands: brandsPage,
@@ -634,6 +704,94 @@ function render() {
   if (page === "map") bindMapPage();
   if (page === "moodboard") bindMoodboardPage();
   if (page === "admin") bindAdminPage();
+}
+
+function showToast(message) {
+  let toast = document.querySelector("#floatingToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "floatingToast";
+    toast.className = "floating-toast";
+    document.body.append(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("visible");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = window.setTimeout(() => {
+    toast.classList.remove("visible");
+  }, 1800);
+}
+
+function syncActionButtons() {
+  const saved = new Set(storageGet(savedKey));
+  const routed = new Set(storageGet(routeKey));
+  document.querySelectorAll("[data-save-brand]").forEach((button) => {
+    button.textContent = saved.has(button.dataset.saveBrand) ? "저장됨" : "무드보드 담기";
+  });
+  document.querySelectorAll("[data-route-brand]").forEach((button) => {
+    button.textContent = routed.has(button.dataset.routeBrand) ? "동선 저장됨" : "동선 담기";
+  });
+}
+
+function refreshCurrentPageState(type) {
+  syncActionButtons();
+  if (page === "brands") {
+    const search = document.querySelector("#brandSearch");
+    if (search) {
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  if (page === "map" && (type === "route" || type === "storage")) {
+    renderRouteList();
+  }
+  if (page === "moodboard" && (type === "saved" || type === "board")) {
+    render();
+  }
+  if (page === "admin" && type === "report") {
+    render();
+  }
+}
+
+function renderRouteList() {
+  const routeList = document.querySelector("#routeList");
+  const toolbar = document.querySelector(".map-toolbar");
+  if (!routeList) {
+    return;
+  }
+  const routeSaved = storageGet(routeKey).map((id) => byId[id]).filter(Boolean);
+  routeList.innerHTML = routeSaved.length
+    ? routeSaved.map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p></div>`).join("")
+    : `<div class="map-item"><strong>저장된 동선이 없습니다.</strong><p>브랜드 카드에서 동선 담기를 누르면 여기에 쌓입니다.</p></div>`;
+  if (toolbar) {
+    const countChip = toolbar.querySelector("[data-route-count]");
+    if (countChip) {
+      countChip.textContent = `동선 저장 ${routeSaved.length}개`;
+    }
+  }
+}
+
+function adminPreviewCard(brand) {
+  return `
+    <article class="brand-card compact">
+      <div class="brand-head">
+        <div>
+          <p class="meta">${brand.regions.join(" · ")}</p>
+          <h3>${brand.name}</h3>
+        </div>
+        <span class="save-chip">${brand.updatedAt}</span>
+      </div>
+      <div class="brand-meta-grid">
+        <div class="brand-meta-item"><strong>대여</strong><span>${brand.loan}</span></div>
+        <div class="brand-meta-item"><strong>협찬</strong><span>${brand.sponsorship}</span></div>
+        <div class="brand-meta-item"><strong>응답</strong><span>${brand.response}</span></div>
+      </div>
+      <div class="detail-list compact-list">
+        <div><strong>운영 시간</strong><span>${brand.operatingHours}</span></div>
+        <div><strong>문의 채널</strong><span>${brand.contactChannel}</span></div>
+        <div><strong>PR / 세일즈</strong><span>${brand.prInfo}</span></div>
+      </div>
+    </article>
+  `;
 }
 
 function loadKakaoMapSdk() {
@@ -715,13 +873,15 @@ function bindShared() {
     button.addEventListener("click", () => {
       const list = new Set(storageGet(savedKey));
       list.add(button.dataset.saveBrand);
-      storageSet(savedKey, [...list]);
+      storageSet(savedKey, [...list], "saved");
       const board = boardState();
       if (!board.some((item) => item.id === button.dataset.saveBrand)) {
         board.push({ id: button.dataset.saveBrand, note: "", purpose: "패션 화보", order: board.length });
         saveBoardState(board);
       }
-      button.textContent = "저장됨";
+      syncActionButtons();
+      refreshCurrentPageState("saved");
+      showToast("무드보드에 바로 반영했습니다.");
     });
   });
 
@@ -729,8 +889,10 @@ function bindShared() {
     button.addEventListener("click", () => {
       const list = new Set(storageGet(routeKey));
       list.add(button.dataset.routeBrand);
-      storageSet(routeKey, [...list]);
-      button.textContent = "동선 저장됨";
+      storageSet(routeKey, [...list], "route");
+      syncActionButtons();
+      refreshCurrentPageState("route");
+      showToast("하루 동선에 바로 담았습니다.");
     });
   });
 
@@ -748,6 +910,8 @@ function bindShared() {
       location.href = `brands.html?query=${encodeURIComponent(button.dataset.homeFilter)}`;
     });
   });
+
+  syncActionButtons();
 }
 
 function bindBrandsPage() {
@@ -833,6 +997,7 @@ function bindBrandsPage() {
     `;
     resultGrid.innerHTML = sorted.map(renderBrandCard).join("");
     bindShared();
+    syncActionButtons();
   }
 
   [search, region, category, mood, target, price, sortSelect].forEach((node) => node.addEventListener("input", update));
@@ -847,9 +1012,10 @@ function bindReportPage() {
     const data = Object.fromEntries(new FormData(form).entries());
     const list = storageGet(reportKey);
     list.unshift({ ...data, submittedAt: new Date().toISOString() });
-    storageSet(reportKey, list);
+    storageSet(reportKey, list, "report");
     form.reset();
     status.textContent = "제출 내용이 로컬에 임시 저장되었습니다. 운영 검토 흐름과 연동할 수 있는 상태입니다.";
+    showToast("제보가 바로 저장되었습니다.");
   });
 }
 
@@ -866,9 +1032,10 @@ function bindMapPage() {
   }
 
   clearRoute.addEventListener("click", () => {
-    storageSet(routeKey, []);
-    const routeList = document.querySelector("#routeList");
-    routeList.innerHTML = `<div class="map-item"><strong>저장된 동선이 없습니다.</strong><p>브랜드 카드에서 동선 담기를 누르면 여기에 쌓입니다.</p></div>`;
+    storageSet(routeKey, [], "route");
+    renderRouteList();
+    syncActionButtons();
+    showToast("저장된 동선을 비웠습니다.");
   });
 }
 
@@ -894,7 +1061,7 @@ function bindMoodboardPage() {
   document.querySelectorAll("[data-board-remove]").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.boardRemove;
-      storageSet(savedKey, storageGet(savedKey).filter((item) => item !== id));
+      storageSet(savedKey, storageGet(savedKey).filter((item) => item !== id), "saved");
       saveBoardState(boardState().filter((item) => item.id !== id).map((item, index) => ({ ...item, order: index })));
       render();
     });
@@ -935,15 +1102,105 @@ function bindMoodboardPage() {
 }
 
 function bindAdminPage() {
+  const reports = storageGet(reportKey);
+  const select = document.querySelector("#adminBrandSelect");
+  const form = document.querySelector("#adminBrandForm");
+  const status = document.querySelector("#adminBrandStatus");
+  const preview = document.querySelector("#adminPreview");
+
+  const fillAdminForm = (brandId) => {
+    const brand = byId[brandId];
+    if (!brand || !form) {
+      return;
+    }
+    ["loan", "sponsorship", "response", "operatingHours", "bookingMethod", "contactChannel", "prInfo", "caution"].forEach((field) => {
+      form.elements[field].value = brand[field] || "";
+    });
+    if (preview) {
+      preview.innerHTML = adminPreviewCard(brand);
+    }
+  };
+
+  if (select) {
+    fillAdminForm(select.value);
+    select.addEventListener("change", () => fillAdminForm(select.value));
+  }
+
+  if (form && select) {
+    const updatePreviewFromForm = () => {
+      const base = byId[select.value];
+      if (!base || !preview) {
+        return;
+      }
+      preview.innerHTML = adminPreviewCard({
+        ...base,
+        loan: form.elements.loan.value.trim() || base.loan,
+        sponsorship: form.elements.sponsorship.value.trim() || base.sponsorship,
+        response: form.elements.response.value.trim() || base.response,
+        operatingHours: form.elements.operatingHours.value.trim() || base.operatingHours,
+        bookingMethod: form.elements.bookingMethod.value.trim() || base.bookingMethod,
+        contactChannel: form.elements.contactChannel.value.trim() || base.contactChannel,
+        prInfo: form.elements.prInfo.value.trim() || base.prInfo,
+        caution: form.elements.caution.value.trim() || base.caution
+      });
+    };
+
+    form.querySelectorAll("input, textarea").forEach((node) => {
+      node.addEventListener("input", updatePreviewFromForm);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const overrides = objectStorageGet(brandOverrideKey);
+      overrides[select.value] = {
+        ...(overrides[select.value] || {}),
+        loan: form.elements.loan.value.trim(),
+        sponsorship: form.elements.sponsorship.value.trim(),
+        response: form.elements.response.value.trim(),
+        operatingHours: form.elements.operatingHours.value.trim(),
+        bookingMethod: form.elements.bookingMethod.value.trim(),
+        contactChannel: form.elements.contactChannel.value.trim(),
+        prInfo: form.elements.prInfo.value.trim(),
+        caution: form.elements.caution.value.trim()
+      };
+      storageSet(brandOverrideKey, overrides, "brand-override");
+      refreshBrandCache();
+      fillAdminForm(select.value);
+      status.textContent = "선택한 브랜드 정보가 즉시 반영되었습니다.";
+      showToast("브랜드 실무 정보를 바로 반영했습니다.");
+    });
+  }
+
+  const resetButton = document.querySelector("#adminResetBrand");
+  if (resetButton && select) {
+    resetButton.addEventListener("click", () => {
+      const overrides = objectStorageGet(brandOverrideKey);
+      delete overrides[select.value];
+      storageSet(brandOverrideKey, overrides, "brand-override");
+      refreshBrandCache();
+      fillAdminForm(select.value);
+      if (status) {
+        status.textContent = "선택한 브랜드의 로컬 수정값을 초기화했습니다.";
+      }
+      showToast("브랜드 수정값을 초기화했습니다.");
+    });
+  }
+
   document.querySelectorAll("[data-report-approve]").forEach((button) => {
     button.addEventListener("click", () => {
-      button.closest("td").innerHTML = `<span class="status-chip ok">승인 처리됨</span>`;
+      const index = Number(button.dataset.reportApprove);
+      reports.splice(index, 1);
+      storageSet(reportKey, reports, "report");
+      showToast("제보를 승인 처리했습니다.");
     });
   });
 
   document.querySelectorAll("[data-report-reject]").forEach((button) => {
     button.addEventListener("click", () => {
-      button.closest("td").innerHTML = `<span class="status-chip">반려 처리됨</span>`;
+      const index = Number(button.dataset.reportReject);
+      reports.splice(index, 1);
+      storageSet(reportKey, reports, "report");
+      showToast("제보를 반려 처리했습니다.");
     });
   });
 }
@@ -951,7 +1208,12 @@ function bindAdminPage() {
 function rememberRecent(id) {
   const items = storageGet(recentKey).filter((item) => item !== id);
   items.unshift(id);
-  storageSet(recentKey, items.slice(0, 10));
+  storageSet(recentKey, items.slice(0, 10), "recent");
 }
+
+window.addEventListener("stylist:state", (event) => {
+  refreshBrandCache();
+  refreshCurrentPageState(event.detail.type);
+});
 
 render();

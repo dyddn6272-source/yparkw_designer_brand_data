@@ -129,6 +129,10 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
   display: grid;
   gap: 14px;
 }
+.admin-editor {
+  display: grid;
+  gap: 12px;
+}
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -166,6 +170,10 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
 }
 .brand-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .brand-card { border-radius: 24px; padding: 22px; display: grid; gap: 14px; }
+.brand-card.compact {
+  padding: 18px;
+  box-shadow: none;
+}
 .brand-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .brand-head h3 { font-size: 1.7rem; }
 .brand-tags .tag, .pill, .save-chip { min-height: 32px; padding: 0 12px; display: inline-flex; align-items: center; background: var(--accent-soft); border-color: transparent; color: var(--accent); }
@@ -181,6 +189,13 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
 .detail-block h3 { font-size: 1.6rem; margin-bottom: 14px; }
 .detail-list { display: grid; gap: 10px; }
 .detail-list div { display: grid; grid-template-columns: 150px 1fr; gap: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.compact-list {
+  gap: 6px;
+}
+.compact-list div {
+  grid-template-columns: 110px 1fr;
+  padding-bottom: 8px;
+}
 .map-layout { display: grid; grid-template-columns: 340px minmax(0,1fr); gap: 18px; }
 .map-stage { border-radius: 28px; padding: 22px; min-height: 520px; position: relative; overflow: hidden; }
 .map-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
@@ -271,6 +286,32 @@ body[data-theme="dark"] .cta-band p { color: rgba(17,17,17,0.72); }
 }
 .footer { margin-top: 22px; display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 0.92rem; }
 .hidden { display: none; }
+.floating-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 40;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(20, 18, 16, 0.9);
+  color: #fff8f1;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.floating-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+body[data-theme="dark"] .floating-toast {
+  background: rgba(245, 239, 232, 0.94);
+  color: #161311;
+}
 
 @media (max-width: 1180px) {
   .hero, .brand-list-layout, .detail-grid, .map-layout, .section-grid-4, .section-grid-3, .section-grid-2, .brand-grid, .brand-meta-grid { grid-template-columns: 1fr; }
