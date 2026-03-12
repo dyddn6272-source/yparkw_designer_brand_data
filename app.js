@@ -91,6 +91,7 @@ const shell = (content) => `
         ${navLink("대여·협찬", "rental.html", page === "rental")}
         ${navLink("업데이트", "updates.html", page === "updates")}
         ${navLink("제보/수정", "report.html", page === "report")}
+        ${navLink("관리자", "admin.html", page === "admin")}
       </nav>
       <div class="utility-nav">
         <a class="utility-button" href="brands.html">검색</a>
@@ -528,6 +529,87 @@ function reportPage() {
   `);
 }
 
+function adminPage() {
+  const reports = storageGet(reportKey);
+  const recentReports = reports.slice(0, 8);
+  const recentlyChecked = [...brands].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8);
+  const officialCount = brands.filter((brand) => brand.qualityTone === "official").length;
+  const loanCount = brands.filter((brand) => brand.loan !== "미확인").length;
+  return shell(`
+    <section class="section">
+      <div class="section-head"><div><p class="eyebrow">Admin Review</p><h2>검수 대시보드</h2><p class="subtle">브랜드 상태, 최근 검수, 사용자 제보를 한 화면에서 운영하는 관리자용 시뮬레이션입니다.</p></div></div>
+      <div class="dashboard-grid">
+        <aside class="dashboard-stack">
+          <div class="section-card">
+            <strong>브랜드 현황</strong>
+            <div class="timeline" style="margin-top:12px;">
+              <div class="timeline-item"><span class="date">TOTAL</span><strong>${brands.length}개 브랜드</strong><p>현재 데이터베이스 기준 등록 브랜드 수</p></div>
+              <div class="timeline-item"><span class="date">OFFICIAL</span><strong>${officialCount}개 공식 검수</strong><p>공식 스토어/매장 페이지 기준 확인 완료</p></div>
+              <div class="timeline-item"><span class="date">LOAN</span><strong>${loanCount}개 대여 정보 보유</strong><p>대여 또는 협찬 문의 메모가 들어간 브랜드</p></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <strong>운영 액션</strong>
+            <div class="board-tools">
+              <button class="mini-button" type="button">브랜드 등록</button>
+              <button class="mini-button" type="button">태그 관리</button>
+              <button class="mini-button" type="button">무드 분류 관리</button>
+              <button class="mini-button" type="button">업데이트 로그 생성</button>
+            </div>
+          </div>
+        </aside>
+        <div class="dashboard-stack">
+          <div class="section-card">
+            <div class="section-head"><div><h2>최근 검수 브랜드</h2><p class="subtle">최근 검수일과 운영 상태를 기준으로 관리</p></div></div>
+            <table class="dashboard-table">
+              <thead>
+                <tr><th>브랜드</th><th>최근 검수</th><th>쇼룸</th><th>대여/협찬</th><th>상태</th></tr>
+              </thead>
+              <tbody>
+                ${recentlyChecked.map((brand) => `
+                  <tr>
+                    <td><strong>${brand.name}</strong><br/><span class="subtle">${brand.regions.join(" · ")}</span></td>
+                    <td>${brand.updatedAt}</td>
+                    <td>${brand.showroomGuide}</td>
+                    <td>${brand.loan} / ${brand.sponsorship}</td>
+                    <td><span class="status-chip ${brand.qualityTone === "official" ? "ok" : "warn"}">${brand.qualityTone === "official" ? "검수 완료" : "추가 확인 필요"}</span></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+          <div class="section-card">
+            <div class="section-head"><div><h2>사용자 제보 대기</h2><p class="subtle">로컬에 저장된 제보를 운영 검토 큐처럼 보여줍니다.</p></div></div>
+            ${recentReports.length ? `
+              <table class="dashboard-table">
+                <thead>
+                  <tr><th>브랜드명</th><th>유형</th><th>참고 링크</th><th>상태</th></tr>
+                </thead>
+                <tbody>
+                  ${recentReports.map((item, index) => `
+                    <tr>
+                      <td>${item.brand}</td>
+                      <td>${item.type}</td>
+                      <td>${item.link || "없음"}</td>
+                      <td>
+                        <div class="board-tools">
+                          <span class="status-chip warn">검토 대기</span>
+                          <button class="mini-button" data-report-approve="${index}" type="button">승인</button>
+                          <button class="mini-button" data-report-reject="${index}" type="button">반려</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            ` : `<div class="board-empty"><strong>현재 대기 중인 제보가 없습니다.</strong><p>제보 페이지에서 제출하면 여기에 표시됩니다.</p></div>`}
+          </div>
+        </div>
+      </div>
+    </section>
+  `);
+}
+
 function optionSet(values) {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b, "ko")).map((item) => `<option value="${item}">${item}</option>`).join("");
 }
@@ -541,7 +623,8 @@ function render() {
     moodboard: moodboardPage,
     rental: rentalPage,
     updates: updatesPage,
-    report: reportPage
+    report: reportPage,
+    admin: adminPage
   }[page]();
 
   app.innerHTML = content;
@@ -550,6 +633,7 @@ function render() {
   if (page === "report") bindReportPage();
   if (page === "map") bindMapPage();
   if (page === "moodboard") bindMoodboardPage();
+  if (page === "admin") bindAdminPage();
 }
 
 function loadKakaoMapSdk() {
@@ -848,6 +932,20 @@ function bindMoodboardPage() {
       window.print();
     });
   }
+}
+
+function bindAdminPage() {
+  document.querySelectorAll("[data-report-approve]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.closest("td").innerHTML = `<span class="status-chip ok">승인 처리됨</span>`;
+    });
+  });
+
+  document.querySelectorAll("[data-report-reject]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.closest("td").innerHTML = `<span class="status-chip">반려 처리됨</span>`;
+    });
+  });
 }
 
 function rememberRecent(id) {
