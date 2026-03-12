@@ -10,7 +10,10 @@
 
 ## 입력 형식
 
-원본은 JSON 배열 기준이다. 예시는 [imports/brand-import-template.json](/home/user/yparkw/imports/brand-import-template.json)에 있다.
+원본은 `JSON` 또는 `CSV`를 받을 수 있다.
+
+- JSON 예시: [imports/brand-import-template.json](/home/user/yparkw/imports/brand-import-template.json)
+- CSV 예시: [imports/brand-import-template.csv](/home/user/yparkw/imports/brand-import-template.csv)
 
 필수에 가까운 필드:
 
@@ -35,6 +38,10 @@
 node scripts/build-imported-brands.mjs --input imports/raw-brands.json
 ```
 
+```bash
+node scripts/build-imported-brands.mjs --input imports/raw-brands.csv
+```
+
 기본 출력 파일:
 
 ```bash
@@ -52,7 +59,7 @@ data/imported-brands.js
 ## 실제 2,000개 확장 절차
 
 1. 외부 API 또는 원본 JSON/CSV 확보
-2. JSON 배열 형태로 정리
+2. JSON 배열 또는 CSV 열 구조로 정리
 3. `build-imported-brands.mjs`로 변환
 4. `data/imported-brands.js` 생성
 5. 사이트에서 바로 확인

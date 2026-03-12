@@ -11,7 +11,7 @@ const inputPath = getArg("--input");
 const outputPath = getArg("--output", "data/imported-brands.js");
 
 if (!inputPath) {
-  console.error("Usage: node scripts/build-imported-brands.mjs --input imports/raw-brands.json [--output data/imported-brands.js]");
+  console.error("Usage: node scripts/build-imported-brands.mjs --input imports/raw-brands.json|csv [--output data/imported-brands.js]");
   process.exit(1);
 }
 
@@ -37,8 +37,72 @@ const toLocations = (record, showroom) => {
     : [];
 };
 
-const raw = JSON.parse(fs.readFileSync(path.resolve(inputPath), "utf8"));
-const items = Array.isArray(raw) ? raw : raw.items || [];
+const parseCsvLine = (line) => {
+  const values = [];
+  let current = "";
+  let quoted = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+
+    if (char === "\"") {
+      if (quoted && next === "\"") {
+        current += "\"";
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+      continue;
+    }
+
+    if (char === "," && !quoted) {
+      values.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current);
+  return values.map((value) => value.trim());
+};
+
+const parseCsv = (content) => {
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length) {
+    return [];
+  }
+
+  const headers = parseCsvLine(lines[0]);
+  return lines.slice(1).map((line) => {
+    const row = parseCsvLine(line);
+    return headers.reduce((record, header, index) => {
+      record[header] = row[index] || "";
+      return record;
+    }, {});
+  });
+};
+
+const readInputItems = (filePath) => {
+  const absolutePath = path.resolve(filePath);
+  const content = fs.readFileSync(absolutePath, "utf8");
+  const extension = path.extname(absolutePath).toLowerCase();
+
+  if (extension === ".csv") {
+    return parseCsv(content);
+  }
+
+  const raw = JSON.parse(content);
+  return Array.isArray(raw) ? raw : raw.items || [];
+};
+
+const items = readInputItems(inputPath);
 const deduped = new Map();
 
 for (const record of items) {
