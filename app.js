@@ -111,7 +111,7 @@ let byId = {};
 
 function refreshBrandCache() {
   const customBrands = storageGet(customBrandKey);
-  brands = [...(window.BRAND_DATA || []), ...customBrands].map(enrichBrand).map(applyBrandOverrides);
+  brands = [...(window.BRAND_DATA || []), ...(window.IMPORTED_BRAND_DATA || []), ...customBrands].map(enrichBrand).map(applyBrandOverrides);
   byId = Object.fromEntries(brands.map((brand) => [brand.id, brand]));
 }
 

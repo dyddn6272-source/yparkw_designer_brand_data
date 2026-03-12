@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Studio Example",
+    "categories": ["의류", "가방"],
+    "styles": ["미니멀", "컨템포러리"],
+    "regions": ["서울", "부산"],
+    "summary": "브랜드 한 줄 설명",
+    "styleNote": "스타일 메모",
+    "showroom": "서울 성동구 예시로 10",
+    "officialSite": "https://example.com",
+    "sourceUrl": "https://example.com/store",
+    "qualityTone": "official",
+    "locations": [
+      {
+        "type": "쇼룸",
+        "name": "Studio Example Seongsu",
+        "address": "서울 성동구 예시로 10"
+      }
+    ]
+  }
+]
