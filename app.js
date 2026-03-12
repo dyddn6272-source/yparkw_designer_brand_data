@@ -4,18 +4,19 @@ const themeKey = "stylist-theme";
 const savedKey = "stylist-saved-brands";
 const recentKey = "stylist-recent-brands";
 const reportKey = "stylist-report-drafts";
+const routeKey = "stylist-route-plan";
 
 const knownMeta = {
-  "LOW CLASSIC": { target: "여성", price: "$$$", season: "프리폴, 코트, 셋업", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@lowclassic", showroom: "예약 방문 가능", note: "광고, 에디토리얼 모두 강함", sample: "중간" },
-  "RECTO": { target: "여성", price: "$$$$", season: "테일러드, 포멀", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@recto_official", showroom: "예약 방문 권장", note: "포멀, 광고, 셀럽 협찬에 적합", sample: "중간" },
-  "Matin Kim": { target: "유니섹스", price: "$$$", season: "트렌드 아이템, 데님, 아우터", loan: "문의 가능", sponsorship: "문의 가능", response: "빠름", instagram: "@matinkim_magazine", showroom: "예약 가능", note: "광고와 셀럽 협찬 레퍼런스 다수", sample: "쉬움" },
-  "AMOMENTO": { target: "여성", price: "$$$$", season: "니트, 구조적 아우터", loan: "문의 가능", sponsorship: "문의 필요", response: "보통", instagram: "@amomento.co", showroom: "예약 가능", note: "에디토리얼 무드 강함", sample: "중간" },
-  "Stand Oil": { target: "여성", price: "$$", season: "백, 슈즈, 소품", loan: "미확인", sponsorship: "문의 가능", response: "보통", instagram: "@standoil", showroom: "방문 가능", note: "백 포인트 스타일링에 강함", sample: "쉬움" },
-  "OSOI": { target: "여성", price: "$$$", season: "백, 슈즈", loan: "미확인", sponsorship: "문의 가능", response: "보통", instagram: "@osoi_official", showroom: "방문 가능", note: "조형적 액세서리 포인트", sample: "중간" },
-  "Rockfish Weatherwear": { target: "여성", price: "$$", season: "슈즈, 레인, 메리제인", loan: "미확인", sponsorship: "문의 가능", response: "빠름", instagram: "@rockfishweatherwear", showroom: "방문 가능", note: "슈즈 포인트 소싱에 적합", sample: "쉬움" },
-  "Margesherwood": { target: "여성", price: "$$$", season: "백, Y2K, 의상 믹스", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@margesherwood", showroom: "방문 가능", note: "백 셀렉이 강한 브랜드", sample: "중간" },
-  "Didier Dubot": { target: "여성", price: "$$$$", season: "주얼리 포인트", loan: "문의 필요", sponsorship: "문의 가능", response: "보통", instagram: "@didierdubot_official", showroom: "오프라인 다수", note: "주얼리 포인트용 활용도 높음", sample: "중간" },
-  "thisisneverthat": { target: "유니섹스", price: "$$", season: "스트릿, 스케이트, 아우터", loan: "문의 가능", sponsorship: "문의 가능", response: "빠름", instagram: "@thisisneverthat", showroom: "방문 가능", note: "스트릿 촬영용 강점", sample: "쉬움" }
+  "LOW CLASSIC": { target: "여성", price: "$$$", season: "프리폴, 코트, 셋업", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@lowclassic", showroom: "예약 방문 가능", note: "광고, 에디토리얼 모두 강함", sample: "중간", hours: "운영 시간 사전 문의 권장", contact: "공식 사이트 문의 또는 인스타그램 DM 확인", pr: "세일즈/PR 공개 메일 별도 확인 필요", booking: "쇼룸 방문 전 예약 문의 권장", caution: "샘플 수량과 사이즈 폭은 시즌별 변동 가능" },
+  "RECTO": { target: "여성", price: "$$$$", season: "테일러드, 포멀", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@recto_official", showroom: "예약 방문 권장", note: "포멀, 광고, 셀럽 협찬에 적합", sample: "중간", hours: "플래그십 운영 시간은 공식 스토어 공지 확인", contact: "공식 사이트 고객/스토어 채널 우선", pr: "브랜드 세일즈 채널 별도 문의 필요", booking: "도산 플래그십 방문 전 일정 체크 권장", caution: "포멀 샘플은 수량 제한 가능성 있음" },
+  "Matin Kim": { target: "유니섹스", price: "$$$", season: "트렌드 아이템, 데님, 아우터", loan: "문의 가능", sponsorship: "문의 가능", response: "빠름", instagram: "@matinkim_magazine", showroom: "예약 가능", note: "광고와 셀럽 협찬 레퍼런스 다수", sample: "쉬움", hours: "성수/도산 운영 시간은 공식 스토어 페이지 확인", contact: "공식 사이트 고객센터 및 인스타그램 공지 확인", pr: "협찬은 공식 채널 문의 기준", booking: "성수 방문과 샘플 문의는 사전 연락 권장", caution: "트렌드 상품은 회전이 빨라 재고 변동이 큼" },
+  "AMOMENTO": { target: "여성", price: "$$$$", season: "니트, 구조적 아우터", loan: "문의 가능", sponsorship: "문의 필요", response: "보통", instagram: "@amomento.co", showroom: "예약 가능", note: "에디토리얼 무드 강함", sample: "중간", hours: "서촌 스토어 운영 시간 확인 권장", contact: "공식 사이트 문의와 인스타그램 채널 확인", pr: "PR/세일즈 공개 정보 확인 필요", booking: "방문 및 샘플 문의는 사전 컨택 권장", caution: "구조적 피스는 사이즈 체감 차이 확인 필요" },
+  "Stand Oil": { target: "여성", price: "$$", season: "백, 슈즈, 소품", loan: "미확인", sponsorship: "문의 가능", response: "보통", instagram: "@standoil", showroom: "방문 가능", note: "백 포인트 스타일링에 강함", sample: "쉬움", hours: "성수 스토어 운영 시간 공지 확인", contact: "공식 사이트 FAQ 및 고객 문의 채널 활용", pr: "협찬 문의 여부는 브랜드 공지 확인", booking: "일반 방문 가능, 대량 셀렉은 문의 권장", caution: "컬러별 품절 속도가 빠른 편" },
+  "OSOI": { target: "여성", price: "$$$", season: "백, 슈즈", loan: "미확인", sponsorship: "문의 가능", response: "보통", instagram: "@osoi_official", showroom: "방문 가능", note: "조형적 액세서리 포인트", sample: "중간", hours: "성수 스토어 운영 시간 확인 권장", contact: "공식 사이트와 인스타그램 채널 병행 확인", pr: "브랜드 채널 문의 기준", booking: "방문 가능, 특별 셀렉은 문의 권장", caution: "핵심 백 모델은 시즌 전개 속도가 빠름" },
+  "Rockfish Weatherwear": { target: "여성", price: "$$", season: "슈즈, 레인, 메리제인", loan: "미확인", sponsorship: "문의 가능", response: "빠름", instagram: "@rockfishweatherwear", showroom: "방문 가능", note: "슈즈 포인트 소싱에 적합", sample: "쉬움", hours: "매장별 운영 시간 공지 확인", contact: "공식 사이트 고객 채널 우선", pr: "협찬 문의는 브랜드 공식 채널 확인", booking: "오프라인 방문 가능", caution: "사이즈 빠짐이 빨라 촬영 일정 전 선확인 필요" },
+  "Margesherwood": { target: "여성", price: "$$$", season: "백, Y2K, 의상 믹스", loan: "문의 가능", sponsorship: "문의 가능", response: "보통", instagram: "@margesherwood", showroom: "방문 가능", note: "백 셀렉이 강한 브랜드", sample: "중간", hours: "한남 플래그십 운영 시간 공지 확인", contact: "공식 사이트 문의 채널 우선", pr: "협찬/세일즈 문의 별도 확인 필요", booking: "방문은 가능하나 사전 컨택 권장", caution: "백 중심 셀렉으로 의상 샘플은 시즌별 편차 존재" },
+  "Didier Dubot": { target: "여성", price: "$$$$", season: "주얼리 포인트", loan: "문의 필요", sponsorship: "문의 가능", response: "보통", instagram: "@didierdubot_official", showroom: "오프라인 다수", note: "주얼리 포인트용 활용도 높음", sample: "중간", hours: "백화점/플래그십 영업 시간 기준", contact: "공식 사이트 스토어 안내 채널 확인", pr: "브랜드 본사/매장 문의 병행 필요", booking: "주얼리 셀렉은 방문 전 문의 권장", caution: "보안/대여 규정 확인 필요" },
+  "thisisneverthat": { target: "유니섹스", price: "$$", season: "스트릿, 스케이트, 아우터", loan: "문의 가능", sponsorship: "문의 가능", response: "빠름", instagram: "@thisisneverthat", showroom: "방문 가능", note: "스트릿 촬영용 강점", sample: "쉬움", hours: "도산 플래그십 영업 시간 확인", contact: "공식 사이트 및 인스타그램 채널 확인", pr: "협찬 공개 채널 확인 필요", booking: "일반 방문 가능", caution: "핵심 협업 상품은 소진이 빠름" }
 };
 
 const moodMap = {
@@ -30,6 +31,8 @@ const moodMap = {
 const slug = (value) => value.toLowerCase().replace(/\./g, "").replace(/[^a-z0-9가-힣]+/g, "-");
 const storageGet = (key) => JSON.parse(localStorage.getItem(key) || "[]");
 const storageSet = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+const googleMapLink = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const naverMapLink = (address) => `https://map.naver.com/p/search/${encodeURIComponent(address)}`;
 
 const enrichBrand = (brand, index) => {
   const extra = knownMeta[brand.name] || {};
@@ -49,9 +52,16 @@ const enrichBrand = (brand, index) => {
     showroomGuide: extra.showroom || (brand.qualityTone === "official" ? "방문 가능" : "운영 확인 필요"),
     stylistNote: extra.note || brand.styleNote,
     sampleDifficulty: extra.sample || "확인 필요",
+    operatingHours: extra.hours || "운영 시간 공개 정보 확인 필요",
+    contactChannel: extra.contact || "공식 사이트 또는 인스타그램 채널 확인 필요",
+    prInfo: extra.pr || "PR/세일즈 문의 정보 확인 필요",
+    bookingMethod: extra.booking || "방문 전 공식 채널 문의 권장",
+    caution: extra.caution || "대여 및 재고 규정은 시즌별로 달라질 수 있음",
     updatedAt: `2026-03-${String((index % 12) + 1).padStart(2, "0")}`,
     primaryLocation,
-    moodSummary: brand.styles.slice(0, 3).join(" · ")
+    moodSummary: brand.styles.slice(0, 3).join(" · "),
+    googleMapUrl: googleMapLink(primaryLocation.address),
+    naverMapUrl: naverMapLink(primaryLocation.address)
   };
 };
 
@@ -116,6 +126,7 @@ function renderBrandCard(brand) {
         <a class="mini-button" href="brand.html?brand=${brand.id}">상세 보기</a>
         <a class="mini-button" href="map.html?region=${encodeURIComponent(brand.regions[0])}">지도에서 보기</a>
         <button class="mini-button" data-save-brand="${brand.id}" type="button">무드보드 담기</button>
+        <button class="mini-button" data-route-brand="${brand.id}" type="button">동선 담기</button>
       </div>
     </article>
   `;
@@ -294,11 +305,16 @@ function detailPage() {
             <h3>실무 정보</h3>
             <div class="detail-list">
               <div><strong>쇼룸 주소</strong><span>${brand.showroom}</span></div>
+              <div><strong>운영 시간</strong><span>${brand.operatingHours}</span></div>
               <div><strong>예약 방식</strong><span>${brand.showroomGuide}</span></div>
+              <div><strong>예약 메모</strong><span>${brand.bookingMethod}</span></div>
+              <div><strong>문의 채널</strong><span>${brand.contactChannel}</span></div>
               <div><strong>공식 사이트</strong><span>${brand.officialSite || "미확인"}</span></div>
               <div><strong>인스타그램</strong><span>${brand.instagram || "미확인"}</span></div>
+              <div><strong>PR / 세일즈</strong><span>${brand.prInfo}</span></div>
               <div><strong>대여 가능 여부</strong><span>${brand.loan}</span></div>
               <div><strong>협찬 가능 여부</strong><span>${brand.sponsorship}</span></div>
+              <div><strong>유의사항</strong><span>${brand.caution}</span></div>
             </div>
           </div>
 
@@ -317,7 +333,7 @@ function detailPage() {
           <div class="detail-block">
             <h3>대표 포인트</h3>
             <div class="map-list">
-              ${brand.locations.map((location) => `<div class="map-item"><strong>${location.name}</strong><p>${location.type} · ${location.address}</p></div>`).join("")}
+              ${brand.locations.map((location) => `<div class="map-item"><strong>${location.name}</strong><p>${location.type} · ${location.address}</p><div class="action-row"><a class="mini-button" href="${googleMapLink(location.address)}" target="_blank" rel="noreferrer">구글맵</a><a class="mini-button" href="${naverMapLink(location.address)}" target="_blank" rel="noreferrer">네이버지도</a></div></div>`).join("")}
             </div>
           </div>
           <div class="detail-block">
@@ -341,6 +357,7 @@ function detailPage() {
 function mapPage() {
   const region = new URLSearchParams(location.search).get("region") || "서울";
   const filtered = brands.filter((brand) => brand.regions.includes(region));
+  const routeSaved = storageGet(routeKey).map((id) => byId[id]).filter(Boolean);
   return shell(`
     <section class="section">
       <div class="section-head"><div><p class="eyebrow">Map & Route</p><h2>지도</h2><p class="subtle">지역별 군집화와 하루 동선 기준으로 브랜드를 확인합니다.</p></div></div>
@@ -348,14 +365,24 @@ function mapPage() {
         <aside class="panel sidebar">
           <div class="filter-group"><label>지역 탭</label><div class="pill-row">${["서울", "부산", "대구", "경기", "제주"].map((item) => `<a class="pill" href="map.html?region=${encodeURIComponent(item)}">${item}</a>`).join("")}</div></div>
           <div class="filter-group"><label>실무 버튼</label><div class="pill-row">${["현재 범위", "도보 15분", "대여 가능", "협찬 가능", "동선 저장"].map((item) => `<span class="pill">${item}</span>`).join("")}</div></div>
-          <div class="map-list">${filtered.slice(0, 6).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p></div>`).join("")}</div>
+          <div class="map-list">${filtered.slice(0, 6).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p><div class="action-row"><button class="mini-button" data-route-brand="${brand.id}" type="button">동선 담기</button><a class="mini-button" href="${brand.googleMapUrl}" target="_blank" rel="noreferrer">구글맵</a></div></div>`).join("")}</div>
+          <div class="detail-block">
+            <h3>저장된 하루 코스</h3>
+            <div id="routeList" class="map-list">
+              ${routeSaved.length ? routeSaved.map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.address}</p></div>`).join("") : `<div class="map-item"><strong>저장된 동선이 없습니다.</strong><p>브랜드 카드에서 동선 담기를 누르면 여기에 쌓입니다.</p></div>`}
+            </div>
+            <div class="action-row">
+              <button id="clearRoute" class="mini-button" type="button">동선 비우기</button>
+              <a class="mini-button" href="moodboard.html">무드보드로 이동</a>
+            </div>
+          </div>
         </aside>
         <div class="map-stage">
           <div class="section-head"><div><h2>${region} 쇼룸 동선</h2><p class="subtle">지하철역 기준 이동과 촬영용 방문 순서를 상상할 수 있게 구성했습니다.</p></div></div>
           <div class="mock-map">
             ${filtered.slice(0, 8).map((brand, index) => `<span class="map-pin" style="left:${18 + (index % 4) * 18}%;top:${24 + Math.floor(index / 4) * 24}%"></span>`).join("")}
           </div>
-          <div class="map-list">${filtered.slice(0, 4).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.name} · ${brand.primaryLocation.address}</p></div>`).join("")}</div>
+          <div class="map-list">${filtered.slice(0, 4).map((brand) => `<div class="map-item"><strong>${brand.name}</strong><p>${brand.primaryLocation.name} · ${brand.primaryLocation.address}</p><div class="action-row"><button class="mini-button" data-route-brand="${brand.id}" type="button">이 동선 저장</button><a class="mini-button" href="${brand.naverMapUrl}" target="_blank" rel="noreferrer">네이버지도</a><a class="mini-button" href="brand.html?brand=${brand.id}">상세</a></div></div>`).join("")}</div>
         </div>
       </div>
     </section>
@@ -466,6 +493,7 @@ function render() {
   bindShared();
   if (page === "brands") bindBrandsPage();
   if (page === "report") bindReportPage();
+  if (page === "map") bindMapPage();
 }
 
 function bindShared() {
@@ -486,6 +514,15 @@ function bindShared() {
       list.add(button.dataset.saveBrand);
       storageSet(savedKey, [...list]);
       button.textContent = "저장됨";
+    });
+  });
+
+  document.querySelectorAll("[data-route-brand]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const list = new Set(storageGet(routeKey));
+      list.add(button.dataset.routeBrand);
+      storageSet(routeKey, [...list]);
+      button.textContent = "동선 저장됨";
     });
   });
 
@@ -565,6 +602,19 @@ function bindReportPage() {
     storageSet(reportKey, list);
     form.reset();
     status.textContent = "제출 내용이 로컬에 임시 저장되었습니다. 운영 검토 흐름과 연동할 수 있는 상태입니다.";
+  });
+}
+
+function bindMapPage() {
+  const clearRoute = document.querySelector("#clearRoute");
+  if (!clearRoute) {
+    return;
+  }
+
+  clearRoute.addEventListener("click", () => {
+    storageSet(routeKey, []);
+    const routeList = document.querySelector("#routeList");
+    routeList.innerHTML = `<div class="map-item"><strong>저장된 동선이 없습니다.</strong><p>브랜드 카드에서 동선 담기를 누르면 여기에 쌓입니다.</p></div>`;
   });
 }
 
