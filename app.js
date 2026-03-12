@@ -5,6 +5,7 @@ const savedKey = "stylist-saved-brands";
 const recentKey = "stylist-recent-brands";
 const reportKey = "stylist-report-drafts";
 const routeKey = "stylist-route-plan";
+const moodboardStateKey = "stylist-moodboard-state";
 const KAKAO_MAP_KEY = "3f221aae00c4902d862593ba1dd601c3";
 
 const knownMeta = {
@@ -36,6 +37,11 @@ const googleMapLink = (address) => `https://www.google.com/maps/search/?api=1&qu
 const naverMapLink = (address) => `https://map.naver.com/p/search/${encodeURIComponent(address)}`;
 const brandAddressText = (brand) => [brand.showroom, ...brand.locations.flatMap((location) => [location.name, location.address])].join(" ");
 const matchesRegionKeyword = (brand, keyword) => !keyword || brand.regions.includes(keyword) || brandAddressText(brand).includes(keyword);
+const boardState = () => {
+  const saved = storageGet(moodboardStateKey);
+  return Array.isArray(saved) ? saved : [];
+};
+const saveBoardState = (items) => storageSet(moodboardStateKey, items);
 
 const enrichBrand = (brand, index) => {
   const extra = knownMeta[brand.name] || {};
@@ -397,7 +403,15 @@ function mapPage() {
 }
 
 function moodboardPage() {
-  const saved = storageGet(savedKey).map((id) => byId[id]).filter(Boolean);
+  const state = boardState();
+  const fallbackSaved = storageGet(savedKey)
+    .filter((id) => !state.some((item) => item.id === id))
+    .map((id) => ({ id, note: "", purpose: "패션 화보", order: 0 }));
+  const merged = [...state, ...fallbackSaved]
+    .map((item, index) => ({ ...item, order: item.order ?? index }))
+    .sort((a, b) => a.order - b.order)
+    .map((item) => ({ ...item, brand: byId[item.id] }))
+    .filter((item) => item.brand);
   return shell(`
     <section class="section">
       <div class="section-head"><div><p class="eyebrow">Moodboard</p><h2>무드보드</h2><p class="subtle">브랜드를 저장하고, 촬영 목적 태그와 노트를 붙여 후보군을 정리합니다.</p></div></div>
@@ -407,9 +421,30 @@ function moodboardPage() {
             <span class="pill">2026 봄 패션 화보</span>
             <span class="pill">배우 협찬 후보</span>
             <span class="pill">성수 쇼룸 하루 일정</span>
+            <button id="exportPdf" class="mini-button" type="button">PDF 내보내기</button>
           </div>
           <div id="savedBoard" class="map-list">
-            ${saved.length ? saved.map((brand) => `<div class="board-item"><strong>${brand.name}</strong><p>${brand.moodSummary}</p><div class="action-row"><a class="mini-button" href="brand.html?brand=${brand.id}">상세 보기</a></div></div>`).join("") : `<div class="board-item"><strong>아직 저장된 브랜드가 없습니다.</strong><p>브랜드 카드에서 무드보드 담기를 누르면 여기에 쌓입니다.</p></div>`}
+            ${merged.length ? merged.map((item, index) => `
+              <div class="board-item" data-board-item="${item.brand.id}">
+                <strong>${item.brand.name}</strong>
+                <p>${item.brand.moodSummary}</p>
+                <div class="board-meta">
+                  <select class="filter-select" data-board-purpose="${item.brand.id}">
+                    ${["패션 화보", "광고 촬영", "배우 협찬", "쇼룸 하루 일정", "셀렉 후보"].map((purpose) => `<option value="${purpose}" ${item.purpose === purpose ? "selected" : ""}>${purpose}</option>`).join("")}
+                  </select>
+                  <div class="action-row">
+                    <button class="mini-button" data-board-up="${item.brand.id}" type="button" ${index === 0 ? "disabled" : ""}>위로</button>
+                    <button class="mini-button" data-board-down="${item.brand.id}" type="button" ${index === merged.length - 1 ? "disabled" : ""}>아래로</button>
+                  </div>
+                </div>
+                <textarea data-board-note="${item.brand.id}" placeholder="촬영 메모, 셀렉 포인트, 연락 상태를 적어두세요.">${item.note || ""}</textarea>
+                <div class="board-tools">
+                  <a class="mini-button" href="brand.html?brand=${item.brand.id}">상세 보기</a>
+                  <a class="mini-button" href="map.html?region=${encodeURIComponent(item.brand.regions[0])}">지도 보기</a>
+                  <button class="mini-button" data-board-remove="${item.brand.id}" type="button">제거</button>
+                </div>
+              </div>
+            `).join("") : `<div class="board-empty"><strong>아직 저장된 브랜드가 없습니다.</strong><p>브랜드 카드에서 무드보드 담기를 누르면 여기에 쌓입니다.</p></div>`}
           </div>
         </div>
         <div class="section-card">
@@ -501,6 +536,7 @@ function render() {
   if (page === "brands") bindBrandsPage();
   if (page === "report") bindReportPage();
   if (page === "map") bindMapPage();
+  if (page === "moodboard") bindMoodboardPage();
 }
 
 function loadKakaoMapSdk() {
@@ -583,6 +619,11 @@ function bindShared() {
       const list = new Set(storageGet(savedKey));
       list.add(button.dataset.saveBrand);
       storageSet(savedKey, [...list]);
+      const board = boardState();
+      if (!board.some((item) => item.id === button.dataset.saveBrand)) {
+        board.push({ id: button.dataset.saveBrand, note: "", purpose: "패션 화보", order: board.length });
+        saveBoardState(board);
+      }
       button.textContent = "저장됨";
     });
   });
@@ -692,6 +733,68 @@ function bindMapPage() {
     const routeList = document.querySelector("#routeList");
     routeList.innerHTML = `<div class="map-item"><strong>저장된 동선이 없습니다.</strong><p>브랜드 카드에서 동선 담기를 누르면 여기에 쌓입니다.</p></div>`;
   });
+}
+
+function bindMoodboardPage() {
+  const persist = () => {
+    const items = [...document.querySelectorAll("[data-board-item]")].map((node, index) => ({
+      id: node.dataset.boardItem,
+      note: node.querySelector("[data-board-note]").value,
+      purpose: node.querySelector("[data-board-purpose]").value,
+      order: index
+    }));
+    saveBoardState(items);
+  };
+
+  document.querySelectorAll("[data-board-note]").forEach((textarea) => {
+    textarea.addEventListener("input", persist);
+  });
+
+  document.querySelectorAll("[data-board-purpose]").forEach((select) => {
+    select.addEventListener("change", persist);
+  });
+
+  document.querySelectorAll("[data-board-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.boardRemove;
+      storageSet(savedKey, storageGet(savedKey).filter((item) => item !== id));
+      saveBoardState(boardState().filter((item) => item.id !== id).map((item, index) => ({ ...item, order: index })));
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-board-up]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const items = boardState().sort((a, b) => a.order - b.order);
+      const index = items.findIndex((item) => item.id === button.dataset.boardUp);
+      if (index <= 0) {
+        return;
+      }
+      [items[index - 1], items[index]] = [items[index], items[index - 1]];
+      saveBoardState(items.map((item, order) => ({ ...item, order })));
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-board-down]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const items = boardState().sort((a, b) => a.order - b.order);
+      const index = items.findIndex((item) => item.id === button.dataset.boardDown);
+      if (index === -1 || index >= items.length - 1) {
+        return;
+      }
+      [items[index], items[index + 1]] = [items[index + 1], items[index]];
+      saveBoardState(items.map((item, order) => ({ ...item, order })));
+      render();
+    });
+  });
+
+  const exportButton = document.querySelector("#exportPdf");
+  if (exportButton) {
+    exportButton.addEventListener("click", () => {
+      window.print();
+    });
+  }
 }
 
 function rememberRecent(id) {

@@ -149,6 +149,38 @@ body[data-theme="dark"] .nav-link.active { color: #141210; }
 .map-item, .board-item { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--panel-solid); }
 .map-item strong, .board-item strong { display: block; margin-bottom: 6px; }
 .map-item p, .board-item p { margin: 0; }
+.board-item textarea {
+  width: 100%;
+  min-height: 96px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: transparent;
+  color: var(--text);
+  resize: vertical;
+}
+.board-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.board-meta .filter-select {
+  min-height: 44px;
+}
+.board-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.board-empty {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  color: var(--muted);
+}
 .mood-card { border-radius: 24px; padding: 24px; min-height: 180px; display: grid; align-content: space-between; background: linear-gradient(160deg, var(--panel-solid), rgba(203,101,54,0.08)); }
 .curation-grid .section-card { min-height: 220px; }
 .timeline { display: grid; gap: 12px; }
