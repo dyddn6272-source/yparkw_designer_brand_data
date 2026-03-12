@@ -185,106 +185,162 @@ function renderBrandCard(brand) {
 }
 
 function homePage() {
-  const featured = brands.slice(0, 8);
-  const moods = ["미니멀", "로맨틱", "구조적", "스트리트", "Y2K", "아방가르드", "클래식 테일러링", "액세서리 포인트"];
-  const updates = brands.slice(0, 6).map((brand, index) => ({ date: brand.updatedAt, title: `${brand.name} 정보 갱신`, text: index % 2 === 0 ? "쇼룸 주소와 최근 검수일을 재확인했습니다." : "브랜드 링크와 오프라인 포인트를 업데이트했습니다." }));
+  const featured = brands.slice(0, 6);
+  const moduleSummaries = [
+    {
+      id: "finder",
+      label: "브랜드 찾기",
+      title: "브랜드 탐색만 빠르게",
+      text: "지역, 무드, 카테고리, 대여 가능 여부를 한 번에 걸어서 후보를 좁힙니다.",
+      href: "brands.html",
+      stats: [`전체 ${brands.length}개`, `공식 링크 ${brands.filter((brand) => brand.officialSite).length}개`, "실무 필터 지원"],
+      items: featured.map((brand) => `${brand.name} · ${brand.moodSummary}`)
+    },
+    {
+      id: "map",
+      label: "지도",
+      title: "쇼룸 동선만 바로 보기",
+      text: "성수, 한남, 청담처럼 이동 동선이 중요한 지역을 지도 중심으로 확인합니다.",
+      href: "map.html",
+      stats: ["카카오 지도 연동", "동선 저장 가능", "외부 지도 바로 열기"],
+      items: ["성수 쇼룸 모아보기", "한남 하루 코스", "청담 플래그십 보기"]
+    },
+    {
+      id: "moodboard",
+      label: "무드보드",
+      title: "저장한 브랜드만 정리하기",
+      text: "후보 브랜드를 저장하고 촬영 목적, 메모, 순서를 붙여 작업 보드처럼 정리합니다.",
+      href: "moodboard.html",
+      stats: ["메모 저장", "순서 변경", "PDF 내보내기"],
+      items: ["패션 화보 후보", "배우 협찬 후보", "하루 일정 보드"]
+    },
+    {
+      id: "rental",
+      label: "대여·협찬",
+      title: "대여·협찬 판단만 모아보기",
+      text: "샘플 대여와 협찬 가능성 중심으로 브랜드를 다시 걸러서 확인합니다.",
+      href: "rental.html",
+      stats: [`대여 메모 ${brands.filter((brand) => brand.loan !== "미확인").length}개`, "응답 속도 비교", "실무 메모 제공"],
+      items: brands.filter((brand) => brand.loan !== "미확인").slice(0, 3).map((brand) => `${brand.name} · ${brand.loan}`)
+    },
+    {
+      id: "updates",
+      label: "업데이트",
+      title: "최근 검수 내역만 확인",
+      text: "주소 변경, 링크 수정, 대여 메모 갱신 같은 업데이트 로그만 따로 봅니다.",
+      href: "updates.html",
+      stats: ["최근 검수일 표시", "주소 수정 로그", "운영 변경 이력"],
+      items: brands.slice(0, 3).map((brand) => `${brand.updatedAt} · ${brand.name}`)
+    },
+    {
+      id: "report",
+      label: "제보/수정",
+      title: "제보와 수정 요청만 제출",
+      text: "쇼룸 이전, 연락처 변경, 신규 브랜드 등록 요청을 별도 흐름으로 보냅니다.",
+      href: "report.html",
+      stats: ["간단 제출 폼", "관리자 검토 연동", "즉시 로컬 저장"],
+      items: ["주소 수정 제보", "연락처 변경 요청", "신규 브랜드 제안"]
+    }
+  ];
   return shell(`
-    <section class="hero">
+    <section class="hero simple-hero">
       <div class="hero-copy">
         <p class="eyebrow">Stylist-first sourcing</p>
-        <h1>한국 디자이너 브랜드를 스타일링 실무 기준으로 찾다</h1>
-        <p>지역, 무드, 아이템, 대여 가능 여부까지 한 번에 탐색하고 쇼룸 동선과 연락 포인트를 빠르게 정리할 수 있게 설계했습니다.</p>
+        <h1>필요한 기능만 골라서 바로 쓰는 스타일리스트 툴</h1>
+        <p>메인에서는 카테고리만 고르고, 들어가면 그 기능만 집중해서 보이도록 구조를 단순화했습니다.</p>
         <div class="hero-search">
           <input class="search-input" id="heroSearch" type="search" placeholder="브랜드명 / 지역 / 스타일 / 아이템 검색 예: 성수 여성 미니멀 아우터 대여 가능" />
-          <div class="quick-filters">
-            ${["성수", "한남", "청담", "미니멀", "스트리트", "액세서리", "슈즈", "대여 가능", "협찬 가능"].map((chip) => `<button class="quick-chip" data-home-filter="${chip}" type="button">${chip}</button>`).join("")}
-          </div>
+          <div class="quick-filters">${["성수", "한남", "청담", "미니멀", "스트리트", "액세서리", "슈즈", "대여 가능"].map((chip) => `<button class="quick-chip" data-home-filter="${chip}" type="button">${chip}</button>`).join("")}</div>
         </div>
       </div>
       <div class="hero-aside">
         <div class="metric-card"><small>브랜드 수</small><strong>${brands.length}</strong></div>
         <div class="metric-card"><small>공식 사이트 연결</small><strong>${brands.filter((brand) => brand.officialSite).length}</strong></div>
-        <div class="metric-card"><small>실무 필드</small><strong>대여 · 협찬 · 연락 · 최근 검수</strong></div>
-        <div class="info-tile">
-          <h3>오늘 바로 시작</h3>
-          <p class="subtle">예쁜 소개보다 빠른 판단. 검색, 비교, 동선, 저장까지 첫 화면에서 시작하도록 설계했습니다.</p>
-        </div>
+        <div class="metric-card"><small>핵심 기능</small><strong>탐색 · 지도 · 저장 · 제보</strong></div>
       </div>
     </section>
 
     <section class="section">
       <div class="section-head">
-        <div><h2>퀵 액션</h2><p class="subtle">실무자가 가장 자주 누를 동작을 바로 배치했습니다.</p></div>
+        <div><h2>카테고리 선택</h2><p class="subtle">필요한 작업 하나만 고르면 그 기능만 집중해서 볼 수 있습니다.</p></div>
+      </div>
+      <div class="home-module-tabs">
+        ${moduleSummaries.map((module, index) => `<button class="module-tab ${index === 0 ? "active" : ""}" data-module-tab="${module.id}" type="button">${module.label}</button>`).join("")}
+      </div>
+      <div class="home-module-stack">
+        ${moduleSummaries.map((module, index) => `
+          <section class="module-panel ${index === 0 ? "active" : ""}" data-module-panel="${module.id}">
+            <div class="module-copy">
+              <p class="eyebrow">Category</p>
+              <h2>${module.title}</h2>
+              <p>${module.text}</p>
+              <div class="pill-row">${module.stats.map((item) => `<span class="pill">${item}</span>`).join("")}</div>
+              <div class="page-actions">
+                <a class="primary-button" href="${module.href}">${module.label} 열기</a>
+              </div>
+            </div>
+            <div class="module-detail">
+              <div class="section-card">
+                <strong>핵심 포인트</strong>
+                <div class="timeline" style="margin-top:12px;">
+                  ${module.items.map((item) => `<div class="timeline-item"><p>${item}</p></div>`).join("")}
+                </div>
+              </div>
+              <div class="section-card">
+                <strong>추천 바로가기</strong>
+                <div class="map-list">
+                  <a class="map-item" href="${module.href}"><strong>${module.label}</strong><p>해당 기능 화면으로 바로 이동</p></a>
+                  <a class="map-item" href="brands.html"><strong>브랜드 찾기</strong><p>전체 브랜드 검색으로 이동</p></a>
+                  <a class="map-item" href="map.html"><strong>지도</strong><p>지역 기준 동선 확인</p></a>
+                </div>
+              </div>
+            </div>
+          </section>
+        `).join("")}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div><h2>빠른 시작</h2><p class="subtle">자주 쓰는 진입만 남겨서 단순하게 정리했습니다.</p></div>
       </div>
       <div class="section-grid-3">
         ${[
-          ["오늘 바로 방문 가능한 쇼룸 찾기", "서울 주요 쇼룸과 플래그십 중심으로 바로 진입", "brands.html?visit=showroom"],
-          ["촬영용 대여 가능한 브랜드만 보기", "대여·협찬 문의 가능 브랜드 중심 탐색", "rental.html?mode=loan"],
-          ["성수/한남 쇼룸 지도 보기", "하루 동선을 만들기 좋은 핵심 지역", "map.html"],
-          ["여성 컨템포러리 브랜드 모아보기", "광고, 에디토리얼, 셀럽 협찬 후보", "brands.html?mood=컨템포러리"],
-          ["슈즈/백/주얼리 브랜드만 보기", "포인트 아이템 위주 빠른 셀렉", "brands.html?category=슈즈"],
-          ["최근 검수된 브랜드부터 보기", "신뢰도 높은 최신 업데이트 기준", "updates.html"]
+          ["브랜드 찾기", "조건 필터로 브랜드만 빠르게 보기", "brands.html"],
+          ["성수 지도", "성수 쇼룸 동선부터 확인", "map.html?region=성수"],
+          ["대여 가능 브랜드", "대여 메모가 있는 브랜드만 보기", "rental.html"],
+          ["무드보드", "저장한 후보 정리", "moodboard.html"],
+          ["최근 업데이트", "갱신된 정보만 확인", "updates.html"],
+          ["제보/수정", "정보 수정 요청 보내기", "report.html"]
         ].map(([title, text, href]) => `<a class="action-card" href="${href}"><strong>${title}</strong><span class="subtle">${text}</span></a>`).join("")}
       </div>
     </section>
 
     <section class="section">
       <div class="section-head">
-        <div><h2>검증된 브랜드</h2><p class="subtle">카드 한 장에서 실무 판단에 필요한 핵심 정보를 먼저 보이게 했습니다.</p></div>
-        <a class="secondary-button" href="brands.html">전체 브랜드 보기</a>
+        <div><h2>바로 볼 브랜드</h2><p class="subtle">초반 판단에 자주 쓰는 브랜드 카드만 간단히 남겼습니다.</p></div>
+        <a class="secondary-button" href="brands.html">전체 보기</a>
       </div>
       <div class="brand-grid">${featured.map(renderBrandCard).join("")}</div>
     </section>
 
     <section class="section section-grid-2">
-      <div class="map-stage">
-        <div class="section-head"><div><h2>지역별 쇼룸 한눈에 보기</h2><p class="subtle">성수, 한남, 청담, 도산, 서촌, 부산권 동선 기준</p></div></div>
-        <div class="pill-row">${["성수", "한남", "청담", "도산", "서촌", "부산"].map((tab) => `<a class="pill" href="map.html?region=${encodeURIComponent(tab)}">${tab}</a>`).join("")}</div>
-        <div class="mock-map">
-          <span class="map-pin" style="left:18%;top:32%"></span>
-          <span class="map-pin" style="left:38%;top:40%"></span>
-          <span class="map-pin" style="left:58%;top:28%"></span>
-          <span class="map-pin" style="left:72%;top:52%"></span>
-          <span class="map-pin" style="left:46%;top:70%"></span>
-        </div>
-      </div>
-      <div class="section-card">
-        <div class="section-head"><div><h2>스타일 / 무드 탐색</h2><p class="subtle">브랜드명이 아니라 무드로 찾는 흐름을 위한 탐색 카드</p></div></div>
-        <div class="mood-grid">
-          ${moods.map((mood) => `<a class="mood-card" href="brands.html?mood=${encodeURIComponent(mood)}"><strong>${mood}</strong><span class="subtle">${moodMap[mood] || "관련 브랜드를 빠르게 모아봅니다."}</span></a>`).join("")}
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head"><div><h2>촬영 목적별 추천 브랜드</h2><p class="subtle">일반 디렉터리가 아니라 실무 큐레이션이 보이도록 구성했습니다.</p></div></div>
-      <div class="curation-grid section-grid-3">
-        ${[
-          ["광고 촬영에 강한 브랜드", "Low Classic, Matin Kim, Recto 등 광고 비주얼과 대중 인지도를 함께 가진 브랜드 중심"],
-          ["에디토리얼 무드가 강한 브랜드", "AMOMENTO, Hyein Seo, EENK, OPEN YY 같은 구조감 있는 브랜드 중심"],
-          ["슈즈 셀렉이 좋은 브랜드", "Rockfish Weatherwear, OSOI, Stand Oil 같이 포인트 아이템이 선명한 브랜드 중심"],
-          ["주얼리 포인트용 브랜드", "Didier Dubot, Midnight Moment 등 포인트 스타일링용"],
-          ["한남 하루 동선 추천", "Mardi Mercredi, Rockfish, Nohant, Hyein Seo 인근 순환 동선"],
-          ["성수 저예산 소싱 추천", "Stand Oil, Archive Bold, Codegraphy, Citybreeze 인근 위주"]
-        ].map(([title, text]) => `<div class="section-card"><strong>${title}</strong><p class="subtle">${text}</p></div>`).join("")}
-      </div>
-    </section>
-
-    <section class="section section-grid-2">
-      <div class="section-card">
-        <div class="section-head"><div><h2>최근 업데이트</h2><p class="subtle">살아있는 데이터라는 인상을 주는 신뢰 섹션</p></div><a class="secondary-button" href="updates.html">업데이트 전체 보기</a></div>
-        <div class="timeline">
-          ${updates.map((item) => `<div class="timeline-item"><span class="date">${item.date}</span><strong>${item.title}</strong><p>${item.text}</p></div>`).join("")}
-        </div>
-      </div>
       <div class="cta-band">
         <div>
-          <h2>쇼룸 이전, 연락처 변경, 신규 브랜드 정보를 알고 있나요?</h2>
-          <p>현장 정보를 가장 빨리 반영할 수 있도록 제보와 수정 요청 흐름을 별도 페이지로 분리했습니다.</p>
+          <h2>정보가 바뀌었나요?</h2>
+          <p>복잡한 설명 없이 제보나 수정 요청만 바로 보낼 수 있게 유지했습니다.</p>
         </div>
         <div class="page-actions">
           <a class="primary-button" href="report.html">브랜드 제보</a>
           <a class="secondary-button" href="report.html">정보 수정 요청</a>
+        </div>
+      </div>
+      <div class="section-card">
+        <strong>현재 구조</strong>
+        <div class="timeline" style="margin-top:12px;">
+          <div class="timeline-item"><p>1. 메인에서 카테고리 선택</p></div>
+          <div class="timeline-item"><p>2. 해당 기능 화면으로 바로 진입</p></div>
+          <div class="timeline-item"><p>3. 새로고침 없이 저장과 수정 반영</p></div>
         </div>
       </div>
     </section>
@@ -749,6 +805,7 @@ function render() {
 
   app.innerHTML = content;
   bindShared();
+  if (page === "home") bindHomePage();
   if (page === "brands") bindBrandsPage();
   if (page === "report") bindReportPage();
   if (page === "map") bindMapPage();
@@ -962,6 +1019,23 @@ function bindShared() {
   });
 
   syncActionButtons();
+}
+
+function bindHomePage() {
+  const tabs = [...document.querySelectorAll("[data-module-tab]")];
+  const panels = [...document.querySelectorAll("[data-module-panel]")];
+  if (!tabs.length || !panels.length) {
+    return;
+  }
+
+  const activate = (id) => {
+    tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.moduleTab === id));
+    panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.modulePanel === id));
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => activate(tab.dataset.moduleTab));
+  });
 }
 
 function bindBrandsPage() {
