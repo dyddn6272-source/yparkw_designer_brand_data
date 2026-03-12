@@ -264,8 +264,15 @@ const renderBrands = () => {
 
     const siteLink = fragment.querySelector(".site-link");
     const sourceLink = fragment.querySelector(".source-link");
-    siteLink.href = brand.officialSite;
     sourceLink.href = brand.sourceUrl;
+
+    if (brand.officialSite) {
+      siteLink.href = brand.officialSite;
+    } else {
+      siteLink.removeAttribute("href");
+      siteLink.classList.add("muted-link");
+      siteLink.textContent = "공식 사이트 미확인";
+    }
 
     brandGrid.append(fragment);
   });

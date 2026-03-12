@@ -302,7 +302,7 @@ window.BRAND_DATA = [
     summary: "대중성과 완성도를 갖춘 대표적인 한국 캐주얼 브랜드.",
     styleNote: "아메리칸 캐주얼과 시티 스트릿이 섞인 데일리 웨어입니다.",
     showroom: "서울 성동구 연무장길 101-1",
-    officialSite: "https://www.covernat.net/",
+    officialSite: "https://covernat.co.kr/",
     sourceUrl: "https://www.covernat.net/article/news/12/7381/",
     qualityTone: "mixed",
     locations: [
@@ -410,7 +410,7 @@ window.BRAND_DATA = [
     summary: "럭셔리 스트릿과 젠더리스 감성이 강한 글로벌 레이블.",
     styleNote: "과감한 실루엣과 하이패션 스트릿이 특징입니다.",
     showroom: "서울 강남구 압구정로12길 42",
-    officialSite: "https://we11done.com/",
+    officialSite: "https://we11-done.com/",
     sourceUrl: "https://we11done.com/",
     qualityTone: "mixed",
     locations: [
@@ -470,8 +470,8 @@ window.BRAND_DATA = [
     summary: "도시적인 캐주얼 무드를 부드럽게 풀어내는 여성복 브랜드.",
     styleNote: "시티웨어와 미니멀 여성 캐주얼의 중간 지점입니다.",
     showroom: "서울 강남구 선릉로153길 37-12",
-    officialSite: "https://restandrecreation.co.kr/",
-    sourceUrl: "https://restandrecreation.co.kr/",
+    officialSite: "https://www.restandrecreation.com/",
+    sourceUrl: "https://www.restandrecreation.com/",
     qualityTone: "mixed",
     locations: [
       { type: "스토어", name: "Rest & Recreation Dosan", address: "서울 강남구 선릉로153길 37-12" }
@@ -515,8 +515,8 @@ window.BRAND_DATA = [
     summary: "단정한 조형미가 강한 가방 중심 브랜드.",
     styleNote: "클래식 미니멀과 조형적 백 무드에 가깝습니다.",
     showroom: "서울 성동구 연무장길 56",
-    officialSite: "https://archive-epke.com/",
-    sourceUrl: "https://archive-epke.com/",
+    officialSite: "https://www.archive-epke.com/",
+    sourceUrl: "https://www.archive-epke.com/",
     qualityTone: "mixed",
     locations: [
       { type: "스토어", name: "Archivepke Seongsu", address: "서울 성동구 연무장길 56" }
@@ -606,8 +606,8 @@ window.BRAND_DATA = [
     summary: "프렌치 클래식 여성 캐주얼을 안정적으로 제안하는 브랜드.",
     styleNote: "페미닌한 프렌치 캐주얼과 클래식 무드가 핵심입니다.",
     showroom: "서울 성동구 성수이로18길 35",
-    officialSite: "https://rolarola.com/",
-    sourceUrl: "https://rolarola.com/",
+    officialSite: "https://www.rolarola.com/main/",
+    sourceUrl: "https://www.rolarola.com/main/",
     qualityTone: "mixed",
     locations: [
       { type: "오피스", name: "ROLA ROLA Studio", address: "서울 성동구 성수이로18길 35" }
@@ -621,8 +621,8 @@ window.BRAND_DATA = [
     summary: "뉴욕 감성의 프레피 스트릿을 풀어내는 브랜드.",
     styleNote: "프레피와 스트릿을 섞은 유니섹스 캐주얼입니다.",
     showroom: "서울 용산구 한남대로27길 26",
-    officialSite: "https://nohant.com/",
-    sourceUrl: "https://nohant.com/",
+    officialSite: "https://www.the-nohant.com/",
+    sourceUrl: "https://www.the-nohant.com/contact/stockist.html?cate_no=90",
     qualityTone: "mixed",
     locations: [
       { type: "쇼룸", name: "NOHANT Hannam", address: "서울 용산구 한남대로27길 26" }
@@ -636,8 +636,8 @@ window.BRAND_DATA = [
     summary: "강한 로고와 구조감 있는 스트릿 실루엣이 특징인 브랜드.",
     styleNote: "하이브리드한 스트릿과 아방가르드 무드입니다.",
     showroom: "서울 강남구 압구정로46길 42",
-    officialSite: "https://ajobyajo.com/",
-    sourceUrl: "https://ajobyajo.com/",
+    officialSite: "",
+    sourceUrl: "https://www.gq-magazine.co.uk/article/ajobyajo-kim-se-hyung-interview-2023",
     qualityTone: "mixed",
     locations: [
       { type: "쇼룸", name: "AJO BY AJO Dosan", address: "서울 강남구 압구정로46길 42" }
